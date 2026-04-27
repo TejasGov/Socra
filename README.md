@@ -1,111 +1,132 @@
- ███████╗ ██████╗  ██████╗ ██████╗  █████╗ 
- ██╔════╝██╔═══██╗██╔════╝██╔══██╗██╔══██╗
- ███████╗██║   ██║██║     ██████╔╝███████║
- ╚════██║██║   ██║██║     ██╔══██╗██╔══██║
- ███████║╚██████╔╝╚██████╗██║  ██║██║  ██║
- ╚══════╝ ╚═════╝  ╚═════╝╚═╝  ╚═╝╚═╝  ╚═╝
+<div align="center">
 
-        Socratic AI • Learn by Thinking
+<br />
 
+<h1>Socra</h1>
 
-        🧠 Socra — Socratic AI Learning System
+<p><em>Socratic AI — Learn by Thinking</em></p>
 
-Socra is an AI-powered learning platform designed to promote critical thinking and academic integrity by guiding students through problems using the Socratic method, instead of giving direct answers.
+<br />
 
-🚨 Problem
+![Status](https://img.shields.io/badge/status-prototype-orange?style=flat-square)
+![Funded](https://img.shields.io/badge/ELN_Funded-University_at_Buffalo-005bbb?style=flat-square)
+![Stack](https://img.shields.io/badge/stack-Python_%7C_React_%7C_OpenAI-111111?style=flat-square)
 
-Modern AI tools like ChatGPT make it easy for students to get instant answers without understanding. This leads to:
+<br />
 
-Shallow learning
-Reduced critical thinking
-Over-reliance on AI
-Increased academic dishonesty
+</div>
 
-Socra addresses this by changing how AI interacts with students.
+---
 
-💡 Solution
+ChatGPT gives students the answer. Socra asks them a question.
 
-Socra enforces a guided reasoning approach:
+That difference is the whole product.
 
-❌ No direct answers
-✅ Step-by-step questioning
-✅ Context-aware hints based on course material
-✅ Encourages thinking before revealing next steps
+---
 
-The goal is simple:
-👉 Make AI a tutor, not a shortcut.
+## The Problem
 
-⚙️ How It Works
+Modern AI tools make it trivially easy to get answers without understanding. Students paste in homework, hit enter, and move on. Nothing sticks.
 
-Socra consists of three core components:
+The result:
 
-1. 🧑‍🏫 Faculty Configuration Layer
-Upload course materials and problem sets
-Uses Retrieval-Augmented Generation (RAG)
-Breaks problems into guided reasoning steps
-2. 🧑‍🎓 Student Learning Environment
-Sandbox environment (no copy-paste / tab switching)
-AI assistant that:
-Asks guiding questions
-Never gives direct solutions
-Encourages students to think, not copy
-3. 📊 Analytics Dashboard
-Tracks where students struggle
-Identifies:
-Common failure points
-Conceptual gaps
-Helps instructors improve teaching
-🧠 Core Idea
+- Shallow, surface-level learning
+- Collapsed critical thinking
+- AI dependency where there should be skill
+- Academic integrity quietly eroding
+
+---
+
+## The Solution
+
+Socra enforces a **guided reasoning approach** rooted in the Socratic method — the same technique that's been the gold standard for teaching for 2,500 years.
 
 Instead of:
-
-“Here’s the answer.”
+> *"Here's the answer to your recursion problem."*
 
 Socra says:
+> *"What's your base case, and why does it matter?"*
 
-“What do you think the first step should be?”
+No direct answers. Ever.
 
-🔬 Research Motivation
+---
 
-Studies suggest that heavy AI usage can reduce cognitive effort and critical thinking. Socra is built to:
+## How It Works
 
-Reduce passive learning
-Increase engagement
-Encourage structured problem solving
-🛠️ Tech Stack (Planned / In Progress)
-Frontend: React / Next.js
-Backend: Python (FastAPI / Flask)
-AI Layer: OpenAI / Gemini / Groq APIs
-RAG Pipeline: Vector DB (FAISS / Pinecone)
-Storage: Local + secure backend
-Sandboxing: Browser + system-level constraints
-🔒 Privacy First
-No raw student answers stored for review
-Only aggregated learning patterns tracked
-No student-level surveillance
-Data scoped per course, per instructor
-🚀 Current Status
-✅ Core concept validated
-✅ ELN-funded project (University at Buffalo)
-🔄 Prototype in development
-🔄 Faculty feedback in progress
-🎯 Future Goals
-Deploy pilot in university labs
-Improve RAG-based reasoning quality
-Build adaptive questioning strategies
-Integrate with LMS platforms
-🤝 Contributing
+### 🧑‍🏫 Faculty Configuration
+- Upload course materials and problem sets
+- Socra builds a reasoning map using RAG (Retrieval-Augmented Generation)
+- Each topic gets a structured hint ladder — broad nudges down to targeted clues
 
-This project is in early-stage development.
-If you're interested in AI, education, or systems design, feel free to reach out.
+### 🧑‍🎓 Student Environment
+- Students work inside a sandboxed interface (no copy-paste, no tab switching)
+- The AI asks guiding questions — it never gives the solution
+- Students must articulate their reasoning before unlocking the next step
 
-📬 Contact
+### 📊 Instructor Analytics
+- Tracks where students consistently get stuck
+- Surfaces conceptual gaps across the class
+- Helps instructors improve content and teaching focus
 
-Atshal Ahmed Khan
-Computer Science, University at Buffalo
+---
+
+## Tech Stack
+
+| Layer | Technology |
+|---|---|
+| Frontend | React / Next.js |
+| Backend | Python (FastAPI) |
+| AI | OpenAI / Groq APIs |
+| RAG Pipeline | FAISS / Pinecone |
+| Sandboxing | Browser-level constraints |
+
+---
+
+## Privacy First
+
+- No raw student answers stored
+- Only aggregated learning patterns tracked
+- No individual surveillance — the goal is understanding, not catching cheaters
+- Data scoped per course, per instructor
+
+---
+
+## Current Status
+
+| Milestone | Status |
+|---|---|
+| Core concept validated | ✅ Done |
+| ELN funding secured (University at Buffalo) | ✅ Done |
+| Faculty feedback sessions | 🔄 In progress |
+| Prototype (MVP) | 🔄 In development |
+| Pilot deployment | 🎯 Planned |
+
+---
+
+## Roadmap
+
+- [ ] MVP with single-course pilot
+- [ ] Adaptive hint generation based on student response quality
+- [ ] LMS integration (Canvas, Blackboard)
+- [ ] Multi-course faculty dashboard
+- [ ] Published research findings from pilot data
+
+---
+
+## Contributing
+
+Early-stage project. If you're interested in AI, education technology, or systems design — open an issue or reach out directly.
+
+---
+
+## Contact
+
+**Atshal Ahmed Khan**  
+B.S. Computer Science (Mathematics minor) — University at Buffalo  
 📧 atshalah@buffalo.edu
 
-⭐ Final Thought
+---
 
-Socra isn’t trying to replace learning.
-It’s trying to bring it back.
+<div align="center">
+<sub><i>Socra isn't trying to replace learning. It's trying to bring it back.</i></sub>
+</div>
