@@ -123,7 +123,7 @@ Early-stage project. If you're interested in AI, education technology, or system
 
 **Atshal Ahmed Khan**  
 B.S. Computer Science (Mathematics minor) — University at Buffalo  
-📧 atshalah@buffalo.edu % tejasgov@buffalo.edu
+📧 atshalah@buffalo.edu & tejasgov@buffalo.edu
 
 ---
 
