@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Research Project — Login</title>
+<link rel="stylesheet" href="css/style.css">
+<style>
+body { display: flex; align-items: center; justify-content: center; min-height: 100vh; background: var(--surface2); }
+.login-card { background: var(--surface); border: 0.5px solid var(--border-strong); border-radius: var(--radius-lg); padding: 2.5rem; width: 100%; max-width: 400px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
+.login-title { font-family: 'DM Serif Display', serif; font-size: 28px; margin-bottom: 0.5rem; }
+.login-sub { font-size: 14px; color: var(--text-2); margin-bottom: 2rem; line-height: 1.5; }
+.form-group { margin-bottom: 1.5rem; }
+.form-label { display: block; font-size: 12px; font-weight: 600; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
+.form-input { width: 100%; padding: 12px 14px; border: 0.5px solid var(--border-strong); border-radius: var(--radius-sm); font-size: 15px; font-family: 'Outfit', sans-serif; background: var(--surface); color: var(--text); }
+.form-input:focus { outline: 2px solid var(--accent); outline-offset: -1px; border-color: transparent; }
+.remember-row { display: flex; align-items: center; gap: 8px; margin-bottom: 2rem; font-size: 13px; color: var(--text-2); cursor: pointer; }
+.btn-block { width: 100%; justify-content: center; padding: 12px; font-size: 15px; }
+.error-msg { color: var(--red); font-size: 13px; margin-top: 1rem; text-align: center; display: none; }
+</style>
+</head>
+<body>
+
+<div class="login-card">
+  <div class="login-title">Sign in</div>
+  <div class="login-sub">Welcome back to the Research Project portal. Please enter your credentials to continue.</div>
+
+  <form id="login-form">
+    <div class="form-group">
+      <label class="form-label" for="userId">User ID</label>
+      <input type="text" id="userId" name="userId" class="form-input" autocomplete="username" placeholder="e.g. PD01" required>
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="password">Password</label>
+      <input type="password" id="password" name="password" class="form-input" autocomplete="current-password" placeholder="••••" required>
+    </div>
+    <label class="remember-row">
+      <input type="checkbox" id="rememberMe" name="rememberMe" checked>
+      Remember me
+    </label>
+    <button type="submit" class="btn btn-primary btn-block">Sign In</button>
+    <div class="error-msg" id="error-msg"></div>
+  </form>
+</div>
+
+<script>
+document.getElementById('login-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const userId = document.getElementById('userId').value.trim();
+  const password = document.getElementById('password').value.trim();
+  const remember = document.getElementById('rememberMe').checked;
+  const errorMsg = document.getElementById('error-msg');
+
+  const MOCK_CREDENTIALS = {
+    'PD01': { pwd: '0202', uid: 'owner' },
+    'TG05': { pwd: '1515', uid: 'tejas' },
+    'AK03': { pwd: '0909', uid: 'atshal' }
+  };
+
+  const user = MOCK_CREDENTIALS[userId];
+  if (user && user.pwd === password) {
+    const token = btoa(userId);
+    if (remember) {
+      localStorage.setItem('token', token);
+      localStorage.setItem('currentUser', user.uid);
+    } else {
+      sessionStorage.setItem('token', token);
+      sessionStorage.setItem('currentUser', user.uid);
+    }
+    localStorage.setItem('savedUserId', userId);
+    window.location.href = 'index.html';
+  } else {
+    errorMsg.textContent = 'Invalid User ID or Password';
+    errorMsg.style.display = 'block';
+  }
+});
+
+// Auto-fill ID if saved
+const saved = localStorage.getItem('savedUserId');
+if (saved) document.getElementById('userId').value = saved;
+</script>
+
+</body>
+</html>

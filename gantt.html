@@ -55,7 +55,7 @@
   </div>
   <div class="nav-user">
     <span id="nav-name"></span>
-    <div class="avatar" id="nav-avatar" onclick="switchUser()" title="Switch user">YO</div>
+    <div class="avatar" id="nav-avatar" onclick="logout()" title="Logout">YO</div>
   </div>
 </nav>
 
@@ -80,30 +80,22 @@
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/data.js"></script>
 <script>
 markActive('gantt');
 updateNavUser();
 
-function switchUser() {
-  const users = Object.keys(USERS);
-  const cur = currentUser();
-  const next = users[(users.indexOf(cur)+1) % users.length];
-  saveData('currentUser', next);
-  updateNavUser();
-}
 
-const ORIGIN = new Date(2025,4,15);
-const END = new Date(2025,7,20);
+
+const ORIGIN = new Date(2026,4,15);
+const END = new Date(2026,7,20);
 const SPAN = Math.round((END - ORIGIN) / 86400000);
 const today = new Date();
 
 function pct(d) { return (Math.round((d - ORIGIN)/86400000) / SPAN) * 100; }
 
 const totalElapsed = Math.min(1, Math.max(0, (today - ORIGIN) / (END - ORIGIN)));
-document.getElementById('pct-done').textContent = Math.round(totalElapsed * 100) + '%';
-const cp = getPhase(today);
-document.getElementById('cur-phase-name').textContent = cp ? cp.label : 'Between phases';
 
 const wrap = document.getElementById('gantt-wrap');
 
@@ -233,21 +225,33 @@ wrap.appendChild(legendRow);
 
 // Progress bars
 const progressList = document.getElementById('progress-list');
-PHASES.forEach(p => {
-  const now = today.getTime();
-  let pctVal = 0;
-  if (now >= p.end.getTime()) pctVal = 100;
-  else if (now > p.start.getTime()) pctVal = Math.round(((now - p.start.getTime()) / (p.end.getTime() - p.start.getTime())) * 100);
-
-  const row = document.createElement('div');
-  row.className = 'progress-row';
-  row.innerHTML = `
-    <div class="progress-label">${p.label}</div>
-    <div class="progress-bar-bg"><div class="progress-bar-fill" style="width:${pctVal}%;background:${p.border}"></div></div>
-    <div class="progress-pct">${pctVal}%</div>
-  `;
-  progressList.appendChild(row);
-});
+function renderPhases() {
+  if (!window.serverData) return;
+  let cpName = 'None';
+  let completedCount = 0;
+  progressList.innerHTML = '';
+  
+  PHASES.forEach((p, i) => {
+    const status = window.serverData.phaseStatuses[i];
+    if (status === 'completed') completedCount++;
+    if (status === 'pending' || status === 'requested' || !status) {
+      if (cpName === 'None') cpName = p.label;
+    }
+    
+    let pctVal = status === 'completed' ? 100 : (status === 'requested' ? 90 : 0);
+    const row = document.createElement('div');
+    row.className = 'progress-row';
+    row.innerHTML = `
+      <div class="progress-label">${p.label}</div>
+      <div class="progress-bar-bg"><div class="progress-bar-fill" style="width:${pctVal}%;background:${p.border}"></div></div>
+      <div class="progress-pct">${pctVal}%</div>
+    `;
+    progressList.appendChild(row);
+  });
+  
+  document.getElementById('cur-phase-name').textContent = completedCount === PHASES.length ? 'All Complete' : cpName;
+  document.getElementById('pct-done').textContent = Math.round((completedCount / PHASES.length) * 100) + '%';
+}
 </script>
 </body>
 </html>

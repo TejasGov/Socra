@@ -90,7 +90,7 @@
   </div>
   <div class="nav-user">
     <span id="nav-name"></span>
-    <div class="avatar" id="nav-avatar" onclick="switchUser()" title="Switch user">YO</div>
+    <div class="avatar" id="nav-avatar" onclick="logout()" title="Logout">YO</div>
   </div>
 </nav>
 
@@ -166,6 +166,7 @@
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/data.js"></script>
 <script>
 markActive('chat');
@@ -174,15 +175,7 @@ updateNavUser();
 let currentChannel = 'general';
 let pinnedDate = null;
 
-function switchUser() {
-  const users = Object.keys(USERS);
-  const cur = currentUser();
-  const next = users[(users.indexOf(cur)+1) % users.length];
-  saveData('currentUser', next);
-  updateNavUser();
-  renderUserList();
-  renderPermissions();
-}
+
 
 function buildUserList() {
   const el = document.getElementById('user-list');
@@ -205,7 +198,7 @@ function renderUserList() { buildUserList(); }
 buildUserList();
 
 function renderPermissions() {
-  const perms = loadData('chatPerms', { alex: true, priya: true });
+  const perms = loadData('chatPerms', { tejas: true, atshal: true });
   const el = document.getElementById('permissions-list');
   el.innerHTML = '';
   const cur = currentUser();
@@ -243,16 +236,15 @@ renderPermissions();
 
 function togglePerm(uid, val) {
   if (currentUser() !== 'owner') return;
-  const perms = loadData('chatPerms', { alex: true, priya: true });
+  const perms = loadData('chatPerms', { tejas: true, atshal: true });
   perms[uid] = val;
-  saveData('chatPerms', perms);
-  renderPermissions();
+  socket.emit('updatePerms', perms);
 }
 
 function canPost() {
   const uid = currentUser();
   if (uid === 'owner') return true;
-  const perms = loadData('chatPerms', { alex: true, priya: true });
+  const perms = loadData('chatPerms', { tejas: true, atshal: true });
   return perms[uid] !== false;
 }
 
@@ -317,7 +309,6 @@ function sendMessage() {
   const text = input.value.trim();
   if (!text) return;
 
-  const msgs = loadData('chatMsgs_' + currentChannel, []);
   const msg = {
     uid: currentUser(),
     text,
@@ -328,12 +319,9 @@ function sendMessage() {
     msg.pinnedDate = pinnedDate;
     msg.pinnedDateLabel = document.getElementById('pinned-date-label').textContent;
   }
-  msgs.push(msg);
-  saveData('chatMsgs_' + currentChannel, msgs);
+  socket.emit('sendMessage', { channel: currentChannel, msg });
   input.value = '';
   clearPin();
-  renderMessages();
-  renderPinnedDates();
 }
 
 function clearPin() {

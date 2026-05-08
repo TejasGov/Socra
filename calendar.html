@@ -67,7 +67,7 @@
   </div>
   <div class="nav-user">
     <span id="nav-name"></span>
-    <div class="avatar" id="nav-avatar" onclick="switchUser()" title="Switch user">YO</div>
+    <div class="avatar" id="nav-avatar" onclick="logout()" title="Logout">YO</div>
   </div>
 </nav>
 
@@ -122,6 +122,7 @@
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/data.js"></script>
 <script>
 markActive('calendar');
@@ -133,13 +134,7 @@ let curMonth = 4, curYear = 2025;
 let selectedKey = null;
 let activeFilter = null;
 
-function switchUser() {
-  const users = Object.keys(USERS);
-  const cur = currentUser();
-  const next = users[(users.indexOf(cur)+1) % users.length];
-  saveData('currentUser', next);
-  updateNavUser();
-}
+
 
 PHASES.forEach((p,i) => {
   const b = document.createElement('button');
@@ -285,13 +280,8 @@ function submitComment() {
   const input = document.getElementById('comment-input');
   const text = input.value.trim();
   if (!text || !selectedKey) return;
-  const all = loadData('dayComments', {});
-  if (!all[selectedKey]) all[selectedKey] = [];
-  all[selectedKey].push({ uid: currentUser(), text, time: fmtTime() });
-  saveData('dayComments', all);
+  socket.emit('addComment', { dateKey: selectedKey, comment: { uid: currentUser(), text, time: fmtTime() } });
   input.value = '';
-  renderComments();
-  render();
 }
 
 document.getElementById('comment-input').addEventListener('keydown', e => {

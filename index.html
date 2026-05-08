@@ -45,9 +45,10 @@
     <a href="gantt.html" data-page="gantt">Timeline</a>
     <a href="chat.html" data-page="chat">Chat</a>
   </div>
-  <div class="nav-user">
+  <div class="nav-user" style="display:flex;align-items:center;gap:10px">
     <span id="nav-name" style="font-size:13px;color:var(--text-2)"></span>
-    <div class="avatar" id="nav-avatar" onclick="switchUser()">YO</div>
+    <button onclick="openChangePassword()" class="btn btn-ghost btn-sm" style="padding:4px 8px;font-size:11px">Change Password</button>
+    <div class="avatar" id="nav-avatar" onclick="logout()" title="Logout">YO</div>
   </div>
 </nav>
 
@@ -103,16 +104,16 @@
         <div class="section-title">Collaborators</div>
         <div class="collab-list">
           <div class="collab-row">
-            <div class="collab-av" style="background:#2D5016">YO</div>
-            <div><div style="font-weight:500">You (Owner)</div><div class="collab-role">Project lead · Full access</div></div>
+            <div class="collab-av" style="background:#2D5016">PD</div>
+            <div><div style="font-weight:500">Prof. Paul</div><div class="collab-role">Project lead · Full access</div></div>
           </div>
           <div class="collab-row">
-            <div class="collab-av" style="background:#185FA5">AC</div>
-            <div><div style="font-weight:500">Alex Chen</div><div class="collab-role">Collaborator · Can comment</div></div>
+            <div class="collab-av" style="background:#185FA5">TG</div>
+            <div><div style="font-weight:500">Tejas Govind</div><div class="collab-role">Collaborator · Can comment</div></div>
           </div>
           <div class="collab-row">
-            <div class="collab-av" style="background:#993556">PN</div>
-            <div><div style="font-weight:500">Priya Nair</div><div class="collab-role">Collaborator · Can comment</div></div>
+            <div class="collab-av" style="background:#993556">AK</div>
+            <div><div style="font-weight:500">Atshal Ahmed Khan</div><div class="collab-role">Collaborator · Can comment</div></div>
           </div>
         </div>
         <div style="margin-top:12px">
@@ -123,49 +124,112 @@
   </div>
 </div>
 
+<div id="pwd-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);align-items:center;justify-content:center;z-index:100">
+  <div style="background:var(--surface);padding:2rem;border-radius:var(--radius-lg);width:300px">
+    <div style="font-weight:600;margin-bottom:1rem">Change Password</div>
+    <div style="margin-bottom:1rem">
+      <label style="font-size:11px;color:var(--text-2)">Old Password</label>
+      <input type="password" id="old-pwd" style="width:100%;padding:8px;margin-top:4px;border:1px solid var(--border)">
+    </div>
+    <div style="margin-bottom:1rem">
+      <label style="font-size:11px;color:var(--text-2)">New Password</label>
+      <input type="password" id="new-pwd" style="width:100%;padding:8px;margin-top:4px;border:1px solid var(--border)">
+    </div>
+    <div id="pwd-err" style="color:var(--red);font-size:11px;margin-bottom:1rem;display:none"></div>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-primary btn-sm" onclick="submitChangePassword()" style="flex:1">Save</button>
+      <button class="btn btn-ghost btn-sm" onclick="closeChangePassword()" style="flex:1">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/data.js"></script>
 <script>
 markActive('overview');
 updateNavUser();
 
 const today = new Date();
-const demo = new Date(2025,7,20);
+const demo = new Date(2026,7,20);
 const daysLeft = Math.max(0, Math.ceil((demo - today) / 86400000));
 document.getElementById('days-left').textContent = daysLeft;
 
 const phaseList = document.getElementById('phase-list');
-PHASES.forEach(p => {
-  const now = today.getTime();
-  const started = now >= p.start.getTime();
-  const done = now >= p.end.getTime();
-  const active = started && !done;
-  let statusText = done ? 'Complete' : active ? 'In progress' : 'Upcoming';
-  let statusBg = done ? '#EAF3DE' : active ? p.bg : 'var(--surface2)';
-  let statusTx = done ? '#27500A' : active ? p.text : 'var(--text-2)';
+function renderPhases() {
+  if (!window.serverData) return;
+  phaseList.innerHTML = '';
+  PHASES.forEach((p, i) => {
+    const status = window.serverData.phaseStatuses[i] || 'pending';
+    const isOwner = currentUser() === 'owner';
+    let statusText = 'Pending';
+    let statusBg = 'var(--surface2)';
+    let statusTx = 'var(--text-2)';
+    let actionBtn = '';
 
-  const el = document.createElement('div');
-  el.className = 'phase-item';
-  el.innerHTML = `
-    <div class="phase-dot" style="background:${p.border}"></div>
-    <div class="phase-info">
-      <div class="phase-name">${p.label}</div>
-      <div class="phase-dates">${fmtShort(p.start)} – ${fmtShort(p.end)}</div>
-    </div>
-    <div class="phase-status" style="background:${statusBg};color:${statusTx}">${statusText}</div>
-  `;
-  phaseList.appendChild(el);
-});
+    if (status === 'completed') {
+      statusText = 'Complete'; statusBg = '#EAF3DE'; statusTx = '#27500A';
+    } else if (status === 'requested') {
+      statusText = 'Review Pending'; statusBg = '#FAEEDA'; statusTx = '#BA7517';
+      if (isOwner) actionBtn = `<button onclick="approvePhase(${i})" class="btn btn-primary btn-sm" style="margin-left:auto;padding:2px 8px;font-size:11px">Approve</button>`;
+    } else {
+      statusText = 'In progress'; statusBg = p.bg; statusTx = p.text;
+      if (isOwner) actionBtn = `<button onclick="markComplete(${i})" class="btn btn-ghost btn-sm" style="margin-left:auto;padding:2px 8px;font-size:11px">Mark Complete</button>`;
+      else actionBtn = `<button onclick="requestComplete(${i})" class="btn btn-ghost btn-sm" style="margin-left:auto;padding:2px 8px;font-size:11px">Request Completion</button>`;
+    }
+
+    const el = document.createElement('div');
+    el.className = 'phase-item';
+    el.innerHTML = `
+      <div class="phase-dot" style="background:${p.border}"></div>
+      <div class="phase-info">
+        <div class="phase-name">${p.label}</div>
+        <div class="phase-dates">${fmtShort(p.start)} – ${fmtShort(p.end)}</div>
+      </div>
+      <div class="phase-status" style="background:${statusBg};color:${statusTx}">${statusText}</div>
+      ${actionBtn}
+    `;
+    phaseList.appendChild(el);
+  });
+}
+
+function requestComplete(idx) { socket.emit('updatePhaseStatus', { phaseIndex: idx, status: 'requested' }); }
+function markComplete(idx) { socket.emit('updatePhaseStatus', { phaseIndex: idx, status: 'completed' }); }
+function approvePhase(idx) { socket.emit('updatePhaseStatus', { phaseIndex: idx, status: 'completed' }); }
 
 const upcoming = MEETINGS.filter(m => m >= today);
 const nextM = upcoming[0];
 document.getElementById('next-meeting-date').textContent = nextM ? fmtDate(nextM) : 'No more sessions';
 
-function switchUser() {
-  const users = Object.keys(USERS);
-  const cur = currentUser();
-  const next = users[(users.indexOf(cur)+1) % users.length];
-  saveData('currentUser', next);
-  updateNavUser();
+function openChangePassword() {
+  document.getElementById('pwd-modal').style.display = 'flex';
+  document.getElementById('pwd-err').style.display = 'none';
+  document.getElementById('old-pwd').value = '';
+  document.getElementById('new-pwd').value = '';
+}
+function closeChangePassword() {
+  document.getElementById('pwd-modal').style.display = 'none';
+}
+async function submitChangePassword() {
+  const oldPassword = document.getElementById('old-pwd').value;
+  const newPassword = document.getElementById('new-pwd').value;
+  const actualUserIdMap = { 'owner': 'PD01', 'tejas': 'TG05', 'atshal': 'AK03' };
+  const userId = actualUserIdMap[currentUser()];
+  
+  if (!oldPassword || !newPassword) return;
+  const res = await fetch('/api/change-password', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ userId, oldPassword, newPassword })
+  });
+  const data = await res.json();
+  if (res.ok) {
+    alert('Password changed successfully. Please log in again.');
+    logout();
+  } else {
+    const err = document.getElementById('pwd-err');
+    err.textContent = data.error || 'Failed to change password';
+    err.style.display = 'block';
+  }
 }
 </script>
 </body>
