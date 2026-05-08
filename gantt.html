@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Research Project — Timeline</title>
+<link rel="stylesheet" href="css/style.css">
+<style>
+.gantt-wrap { background: var(--surface); border: 0.5px solid var(--border-strong); border-radius: var(--radius-lg); padding: 1.75rem; overflow-x: auto; }
+.month-axis { display: flex; margin-left: 200px; margin-bottom: 6px; }
+.month-lbl { text-align: center; font-size: 11px; font-weight: 600; color: var(--text-3); padding-bottom: 6px; text-transform: uppercase; letter-spacing: 0.06em; border-bottom: 0.5px solid var(--border-strong); }
+.phase-row { display: flex; align-items: center; margin-bottom: 9px; }
+.phase-lbl { width: 200px; min-width: 200px; font-size: 12px; color: var(--text-2); text-align: right; padding-right: 16px; line-height: 1.3; font-weight: 500; }
+.track { flex: 1; position: relative; height: 40px; min-width: 500px; }
+.bar { position: absolute; height: 40px; border-radius: 6px; display: flex; align-items: center; justify-content: space-between; padding: 0 10px; box-sizing: border-box; overflow: hidden; transition: opacity 0.2s; }
+.bar:hover { opacity: 0.85; }
+.bar-date { font-size: 11px; font-weight: 500; opacity: 0.9; white-space: nowrap; flex-shrink: 0; }
+.grid-line { position: absolute; top: 0; bottom: 0; width: 0.5px; background: var(--border); }
+.meeting-pin { position: absolute; top: 50%; transform: translate(-50%,-50%) rotate(45deg); width: 10px; height: 10px; background: #C8391A; border: 2px solid var(--surface); border-radius: 2px; z-index: 5; cursor: pointer; transition: transform 0.15s; }
+.meeting-pin:hover { transform: translate(-50%,-50%) rotate(45deg) scale(1.3); }
+.meeting-row { display: flex; align-items: center; margin-bottom: 5px; margin-top: 6px; }
+.meeting-track { flex: 1; position: relative; height: 24px; min-width: 500px; }
+.baseline { position: absolute; top: 50%; left: 0; right: 0; height: 0.5px; background: var(--border-strong); }
+.meet-wrap { position: absolute; top: 50%; transform: translate(-50%,-50%); }
+.meet-diamond { width: 12px; height: 12px; background: #C8391A; border: 2px solid var(--surface); border-radius: 2px; transform: rotate(45deg); }
+.meet-date-lbl { position: absolute; top: 14px; left: 50%; transform: translateX(-50%); font-size: 10px; color: var(--text-3); white-space: nowrap; font-family: 'DM Mono', monospace; }
+
+.legend-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 1.5rem; }
+.leg-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-2); }
+.leg-swatch { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+
+.summary-strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px,1fr)); gap: 10px; margin-bottom: 1.5rem; }
+.strip-card { background: var(--surface); border: 0.5px solid var(--border-strong); border-radius: var(--radius-md); padding: 10px 14px; }
+.strip-num { font-family: 'DM Mono', monospace; font-size: 22px; font-weight: 500; }
+.strip-lbl { font-size: 11px; color: var(--text-2); margin-top: 1px; }
+
+.progress-section { margin-top: 1.75rem; }
+.progress-title { font-size: 12px; font-weight: 600; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 12px; }
+.progress-row { display: flex; align-items: center; gap: 12px; margin-bottom: 9px; }
+.progress-label { font-size: 13px; color: var(--text-2); width: 200px; flex-shrink: 0; font-weight: 500; }
+.progress-bar-bg { flex: 1; height: 6px; background: var(--surface2); border-radius: 3px; overflow: hidden; }
+.progress-bar-fill { height: 100%; border-radius: 3px; transition: width 0.6s ease; }
+.progress-pct { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--text-2); width: 36px; text-align: right; flex-shrink: 0; }
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-brand" href="index.html">Research <span>Project</span></a>
+  <div class="nav-links">
+    <a href="index.html" data-page="overview">Overview</a>
+    <a href="calendar.html" data-page="calendar">Calendar</a>
+    <a href="gantt.html" data-page="gantt">Timeline</a>
+    <a href="chat.html" data-page="chat">Chat</a>
+  </div>
+  <div class="nav-user">
+    <span id="nav-name"></span>
+    <div class="avatar" id="nav-avatar" onclick="switchUser()" title="Switch user">YO</div>
+  </div>
+</nav>
+
+<div class="page">
+  <div style="margin-bottom:1.5rem">
+    <div class="mono" style="font-size:11px;color:var(--accent);letter-spacing:0.08em;margin-bottom:4px">GANTT TIMELINE</div>
+    <h1 class="serif" style="font-size:28px">Project timeline</h1>
+  </div>
+
+  <div class="summary-strip">
+    <div class="strip-card"><div class="strip-num">May 15</div><div class="strip-lbl">Project start</div></div>
+    <div class="strip-card"><div class="strip-num">Aug 20</div><div class="strip-lbl">Final demo</div></div>
+    <div class="strip-card"><div class="strip-num" id="pct-done">—%</div><div class="strip-lbl">Overall progress</div></div>
+    <div class="strip-card"><div class="strip-num" id="cur-phase-name" style="font-size:14px;line-height:1.3">—</div><div class="strip-lbl">Current phase</div></div>
+  </div>
+
+  <div class="gantt-wrap" id="gantt-wrap"></div>
+
+  <div class="progress-section">
+    <div class="progress-title">Phase progress</div>
+    <div id="progress-list"></div>
+  </div>
+</div>
+
+<script src="js/data.js"></script>
+<script>
+markActive('gantt');
+updateNavUser();
+
+function switchUser() {
+  const users = Object.keys(USERS);
+  const cur = currentUser();
+  const next = users[(users.indexOf(cur)+1) % users.length];
+  saveData('currentUser', next);
+  updateNavUser();
+}
+
+const ORIGIN = new Date(2025,4,15);
+const END = new Date(2025,7,20);
+const SPAN = Math.round((END - ORIGIN) / 86400000);
+const today = new Date();
+
+function pct(d) { return (Math.round((d - ORIGIN)/86400000) / SPAN) * 100; }
+
+const totalElapsed = Math.min(1, Math.max(0, (today - ORIGIN) / (END - ORIGIN)));
+document.getElementById('pct-done').textContent = Math.round(totalElapsed * 100) + '%';
+const cp = getPhase(today);
+document.getElementById('cur-phase-name').textContent = cp ? cp.label : 'Between phases';
+
+const wrap = document.getElementById('gantt-wrap');
+
+const months = [
+  {label:'May', start:0, days:17},
+  {label:'June', start:17, days:30},
+  {label:'July', start:47, days:31},
+  {label:'August', start:78, days:20},
+];
+
+const axisRow = document.createElement('div');
+axisRow.style.cssText = 'display:flex;margin-left:200px;margin-bottom:6px;min-width:500px;';
+months.forEach(m => {
+  const el = document.createElement('div');
+  el.className = 'month-lbl';
+  el.style.cssText = `flex:${m.days};`;
+  el.textContent = m.label;
+  axisRow.appendChild(el);
+});
+wrap.appendChild(axisRow);
+
+PHASES.forEach(p => {
+  const row = document.createElement('div');
+  row.className = 'phase-row';
+
+  const lbl = document.createElement('div');
+  lbl.className = 'phase-lbl';
+  lbl.textContent = p.label;
+
+  const track = document.createElement('div');
+  track.className = 'track';
+
+  months.forEach(m => {
+    const gl = document.createElement('div');
+    gl.className = 'grid-line';
+    gl.style.left = pct(new Date(ORIGIN.getTime() + m.start*86400000)) + '%';
+    track.appendChild(gl);
+  });
+
+  const left = pct(p.start);
+  const width = pct(p.end) - left;
+
+  const bar = document.createElement('div');
+  bar.className = 'bar';
+  bar.style.cssText = `left:${left}%;width:${width}%;background:${p.bg};border:1px solid ${p.border};`;
+
+  const ds = document.createElement('span');
+  ds.className = 'bar-date';
+  ds.style.color = p.text;
+  ds.textContent = fmtShort(p.start);
+
+  const de = document.createElement('span');
+  de.className = 'bar-date';
+  de.style.color = p.text;
+  de.textContent = fmtShort(p.end);
+
+  bar.appendChild(ds); bar.appendChild(de);
+
+  // today marker inside bar
+  if (today >= p.start && today < p.end) {
+    const todayLine = document.createElement('div');
+    const tpct = ((today - p.start)/(p.end - p.start))*100;
+    todayLine.style.cssText = `position:absolute;top:0;bottom:0;left:${tpct}%;width:2px;background:${p.border};opacity:0.5;border-radius:1px;`;
+    bar.appendChild(todayLine);
+  }
+
+  track.appendChild(bar);
+  row.appendChild(lbl);
+  row.appendChild(track);
+  wrap.appendChild(row);
+});
+
+// Advising row
+const mrow = document.createElement('div');
+mrow.className = 'meeting-row';
+const mlbl = document.createElement('div');
+mlbl.className = 'phase-lbl';
+mlbl.style.cssText = 'width:200px;min-width:200px;font-size:12px;color:var(--text-2);text-align:right;padding-right:16px;font-style:italic;';
+mlbl.textContent = 'Advising sessions';
+const mtrack = document.createElement('div');
+mtrack.className = 'meeting-track';
+
+const bl = document.createElement('div');
+bl.className = 'baseline';
+mtrack.appendChild(bl);
+
+MEETINGS.forEach(mt => {
+  const wrap2 = document.createElement('div');
+  wrap2.className = 'meet-wrap';
+  wrap2.style.left = pct(mt) + '%';
+  const diamond = document.createElement('div');
+  diamond.className = 'meet-diamond';
+  const lbl2 = document.createElement('div');
+  lbl2.className = 'meet-date-lbl';
+  lbl2.textContent = fmtShort(mt);
+  wrap2.appendChild(diamond);
+  wrap2.appendChild(lbl2);
+  mtrack.appendChild(wrap2);
+});
+
+mrow.appendChild(mlbl);
+mrow.appendChild(mtrack);
+wrap.appendChild(mrow);
+
+// Today line across full gantt
+const todayPct = Math.max(0, Math.min(100, pct(today)));
+const tline = document.createElement('div');
+tline.style.cssText = `position:absolute;top:0;bottom:0;left:calc(200px + ${todayPct}%);width:1.5px;background:#C8391A;opacity:0.4;pointer-events:none;`;
+wrap.style.position = 'relative';
+wrap.appendChild(tline);
+
+// Legend
+const legendRow = document.createElement('div');
+legendRow.className = 'legend-row';
+legendRow.style.marginTop = '1.5rem';
+PHASES.forEach(p => {
+  const item = document.createElement('div');
+  item.className = 'leg-item';
+  item.innerHTML = `<div class="leg-swatch" style="background:${p.border}"></div>${p.label}`;
+  legendRow.appendChild(item);
+});
+const mleg = document.createElement('div');
+mleg.className = 'leg-item';
+mleg.innerHTML = `<div style="width:10px;height:10px;background:#C8391A;border-radius:2px;transform:rotate(45deg);flex-shrink:0"></div>Advising session`;
+legendRow.appendChild(mleg);
+wrap.appendChild(legendRow);
+
+// Progress bars
+const progressList = document.getElementById('progress-list');
+PHASES.forEach(p => {
+  const now = today.getTime();
+  let pctVal = 0;
+  if (now >= p.end.getTime()) pctVal = 100;
+  else if (now > p.start.getTime()) pctVal = Math.round(((now - p.start.getTime()) / (p.end.getTime() - p.start.getTime())) * 100);
+
+  const row = document.createElement('div');
+  row.className = 'progress-row';
+  row.innerHTML = `
+    <div class="progress-label">${p.label}</div>
+    <div class="progress-bar-bg"><div class="progress-bar-fill" style="width:${pctVal}%;background:${p.border}"></div></div>
+    <div class="progress-pct">${pctVal}%</div>
+  `;
+  progressList.appendChild(row);
+});
+</script>
+</body>
+</html>

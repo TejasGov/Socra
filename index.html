@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Research Project — Overview</title>
+<link rel="stylesheet" href="css/style.css">
+<style>
+.hero { padding: 4rem 0 2rem; }
+.hero-sub { font-size: 15px; color: var(--text-2); margin: 0.75rem 0 2rem; max-width: 520px; line-height: 1.7; }
+.hero-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin: 2.5rem 0; }
+.stat-card { background: var(--surface); border: 0.5px solid var(--border-strong); border-radius: var(--radius-md); padding: 1.1rem 1.25rem; }
+.stat-num { font-family: 'DM Mono', monospace; font-size: 28px; font-weight: 500; color: var(--text); }
+.stat-label { font-size: 12px; color: var(--text-2); margin-top: 2px; }
+.phase-list { display: flex; flex-direction: column; gap: 10px; margin-top: 1.5rem; }
+.phase-item { display: flex; align-items: center; gap: 14px; background: var(--surface); border: 0.5px solid var(--border-strong); border-radius: var(--radius-md); padding: 14px 16px; }
+.phase-dot { width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0; }
+.phase-info { flex: 1; }
+.phase-name { font-weight: 500; font-size: 14px; }
+.phase-dates { font-size: 12px; color: var(--text-2); margin-top: 1px; }
+.phase-status { font-size: 11px; font-weight: 500; padding: 3px 10px; border-radius: 20px; }
+.two-col { display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; margin-top: 2rem; align-items: start; }
+.advisor-card { background: var(--surface); border: 0.5px solid var(--border-strong); border-radius: var(--radius-lg); padding: 1.5rem; }
+.advisor-name { font-size: 16px; font-weight: 500; margin: 0.75rem 0 0.25rem; }
+.advisor-role { font-size: 13px; color: var(--text-2); }
+.advisor-av { width: 52px; height: 52px; border-radius: 50%; background: var(--accent); color: #fff; font-size: 18px; font-family: 'DM Serif Display', serif; display: flex; align-items: center; justify-content: center; }
+.next-meeting { margin-top: 1rem; padding: 10px 12px; background: var(--accent-light); border-radius: var(--radius-sm); font-size: 13px; }
+.next-meeting strong { color: var(--accent); }
+.collab-list { margin-top: 10px; display: flex; flex-direction: column; gap: 8px; }
+.collab-row { display: flex; align-items: center; gap: 10px; font-size: 13px; }
+.collab-av { width: 30px; height: 30px; border-radius: 50%; color: #fff; font-size: 11px; font-weight: 600; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.collab-role { font-size: 12px; color: var(--text-2); }
+.section-title { font-size: 13px; font-weight: 600; color: var(--text-2); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 1rem; }
+@media (max-width: 700px) { .two-col { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-brand" href="index.html">Research <span>Project</span></a>
+  <div class="nav-links">
+    <a href="index.html" data-page="overview">Overview</a>
+    <a href="calendar.html" data-page="calendar">Calendar</a>
+    <a href="gantt.html" data-page="gantt">Timeline</a>
+    <a href="chat.html" data-page="chat">Chat</a>
+  </div>
+  <div class="nav-user">
+    <span id="nav-name" style="font-size:13px;color:var(--text-2)"></span>
+    <div class="avatar" id="nav-avatar" onclick="switchUser()">YO</div>
+  </div>
+</nav>
+
+<div class="page">
+  <div class="hero">
+    <div class="mono" style="font-size:12px;color:var(--accent);letter-spacing:0.08em;margin-bottom:0.5rem;">CSE RESEARCH PROJECT · 2025</div>
+    <h1 class="serif">AI-Powered Learning<br><em>Tutor System</em></h1>
+    <p class="hero-sub">An intelligent tutoring platform integrating RAG-based knowledge retrieval, adaptive feedback, and CSE 115/116 curriculum alignment — advised by Prof. Paul.</p>
+    <div class="hero-actions">
+      <a href="calendar.html" class="btn btn-primary">View calendar</a>
+      <a href="gantt.html" class="btn btn-ghost">See timeline</a>
+      <a href="chat.html" class="btn btn-ghost">Open chat</a>
+    </div>
+  </div>
+
+  <div class="stat-grid">
+    <div class="stat-card">
+      <div class="stat-num">98</div>
+      <div class="stat-label">Total project days</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num">6</div>
+      <div class="stat-label">Project phases</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num">7</div>
+      <div class="stat-label">Advising sessions</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" id="days-left">—</div>
+      <div class="stat-label">Days until demo</div>
+    </div>
+  </div>
+
+  <div class="two-col">
+    <div>
+      <div class="section-title">Project phases</div>
+      <div class="phase-list" id="phase-list"></div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:1.25rem;">
+      <div class="advisor-card">
+        <div class="section-title">Advisor</div>
+        <div class="advisor-av">P</div>
+        <div class="advisor-name">Prof. Paul</div>
+        <div class="advisor-role">Computer Science Faculty</div>
+        <div class="next-meeting" id="next-meeting-box">
+          <strong>Next meeting:</strong> <span id="next-meeting-date">—</span>
+        </div>
+      </div>
+
+      <div class="advisor-card">
+        <div class="section-title">Collaborators</div>
+        <div class="collab-list">
+          <div class="collab-row">
+            <div class="collab-av" style="background:#2D5016">YO</div>
+            <div><div style="font-weight:500">You (Owner)</div><div class="collab-role">Project lead · Full access</div></div>
+          </div>
+          <div class="collab-row">
+            <div class="collab-av" style="background:#185FA5">AC</div>
+            <div><div style="font-weight:500">Alex Chen</div><div class="collab-role">Collaborator · Can comment</div></div>
+          </div>
+          <div class="collab-row">
+            <div class="collab-av" style="background:#993556">PN</div>
+            <div><div style="font-weight:500">Priya Nair</div><div class="collab-role">Collaborator · Can comment</div></div>
+          </div>
+        </div>
+        <div style="margin-top:12px">
+          <a href="chat.html" class="btn btn-ghost btn-sm" style="width:100%;justify-content:center">Open team chat →</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="js/data.js"></script>
+<script>
+markActive('overview');
+updateNavUser();
+
+const today = new Date();
+const demo = new Date(2025,7,20);
+const daysLeft = Math.max(0, Math.ceil((demo - today) / 86400000));
+document.getElementById('days-left').textContent = daysLeft;
+
+const phaseList = document.getElementById('phase-list');
+PHASES.forEach(p => {
+  const now = today.getTime();
+  const started = now >= p.start.getTime();
+  const done = now >= p.end.getTime();
+  const active = started && !done;
+  let statusText = done ? 'Complete' : active ? 'In progress' : 'Upcoming';
+  let statusBg = done ? '#EAF3DE' : active ? p.bg : 'var(--surface2)';
+  let statusTx = done ? '#27500A' : active ? p.text : 'var(--text-2)';
+
+  const el = document.createElement('div');
+  el.className = 'phase-item';
+  el.innerHTML = `
+    <div class="phase-dot" style="background:${p.border}"></div>
+    <div class="phase-info">
+      <div class="phase-name">${p.label}</div>
+      <div class="phase-dates">${fmtShort(p.start)} – ${fmtShort(p.end)}</div>
+    </div>
+    <div class="phase-status" style="background:${statusBg};color:${statusTx}">${statusText}</div>
+  `;
+  phaseList.appendChild(el);
+});
+
+const upcoming = MEETINGS.filter(m => m >= today);
+const nextM = upcoming[0];
+document.getElementById('next-meeting-date').textContent = nextM ? fmtDate(nextM) : 'No more sessions';
+
+function switchUser() {
+  const users = Object.keys(USERS);
+  const cur = currentUser();
+  const next = users[(users.indexOf(cur)+1) % users.length];
+  saveData('currentUser', next);
+  updateNavUser();
+}
+</script>
+</body>
+</html>

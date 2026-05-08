@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Research Project — Calendar</title>
+<link rel="stylesheet" href="css/style.css">
+<style>
+.cal-layout { display: grid; grid-template-columns: 1fr 300px; gap: 1.5rem; align-items: start; }
+.filter-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 1rem; }
+.filter-btn { font-size: 12px; border-radius: 20px; padding: 4px 13px; border: 0.5px solid var(--border-strong); background: none; cursor: pointer; color: var(--text-2); font-family: 'Outfit', sans-serif; transition: all 0.15s; }
+.filter-btn.active { color: var(--text); border-color: var(--accent); background: var(--accent-light); }
+.cal-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+.month-title { font-family: 'DM Serif Display', serif; font-size: 22px; font-weight: 400; }
+.dow-row { display: grid; grid-template-columns: repeat(7,1fr); gap: 3px; margin-bottom: 3px; }
+.dow-cell { text-align: center; font-size: 11px; font-weight: 600; color: var(--text-3); padding: 4px 0; text-transform: uppercase; letter-spacing: 0.04em; }
+.cal-grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 3px; }
+.day-cell {
+  min-height: 62px; border-radius: var(--radius-sm);
+  border: 0.5px solid var(--border);
+  padding: 6px 7px; position: relative; cursor: pointer;
+  transition: border-color 0.12s, transform 0.1s;
+}
+.day-cell:hover { border-color: var(--border-strong); transform: scale(1.02); z-index: 2; }
+.day-cell.other-month { opacity: 0.25; cursor: default; }
+.day-cell.other-month:hover { transform: none; }
+.day-cell.advising { border: 2px solid #C8391A !important; }
+.day-cell.selected { outline: 2px solid var(--accent); outline-offset: 1px; }
+.day-num { font-size: 12px; font-weight: 500; }
+.meet-dot { width: 6px; height: 6px; border-radius: 50%; background: #C8391A; display: block; margin-top: 4px; }
+.phase-label-tag { font-size: 10px; font-weight: 500; border-radius: 3px; padding: 1px 5px; margin-top: 3px; display: inline-block; white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+.comment-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); display: inline-block; margin-top: 4px; margin-left: 2px; }
+
+/* SIDEBAR */
+.sidebar-card { background: var(--surface); border: 0.5px solid var(--border-strong); border-radius: var(--radius-lg); padding: 1.25rem; position: sticky; top: calc(var(--nav-h) + 1rem); }
+.sidebar-date { font-family: 'DM Serif Display', serif; font-size: 20px; font-weight: 400; margin-bottom: 4px; }
+.sidebar-phase { font-size: 12px; font-weight: 500; padding: 3px 10px; border-radius: 20px; display: inline-block; margin-bottom: 1rem; }
+.comments-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 1rem; max-height: 280px; overflow-y: auto; }
+.comment-item { display: flex; gap: 8px; }
+.comment-av { width: 26px; height: 26px; border-radius: 50%; color: #fff; font-size: 10px; font-weight: 600; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+.comment-body { flex: 1; }
+.comment-author { font-size: 12px; font-weight: 500; }
+.comment-time { font-size: 11px; color: var(--text-3); margin-left: 6px; }
+.comment-text { font-size: 13px; color: var(--text-2); margin-top: 2px; line-height: 1.5; }
+.comment-input-row { display: flex; gap: 6px; align-items: flex-end; }
+.no-select { font-size: 13px; color: var(--text-3); text-align: center; padding: 2rem 0; }
+
+.legend-section { margin-top: 1.5rem; }
+.legend-title { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-3); margin-bottom: 8px; }
+.legend-items { display: flex; flex-direction: column; gap: 6px; }
+.legend-item { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-2); }
+.leg-dot { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+.leg-ring { width: 10px; height: 10px; border-radius: 50%; border: 2px solid #C8391A; flex-shrink: 0; }
+
+@media (max-width: 800px) { .cal-layout { grid-template-columns: 1fr; } .sidebar-card { position: static; } }
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-brand" href="index.html">Research <span>Project</span></a>
+  <div class="nav-links">
+    <a href="index.html" data-page="overview">Overview</a>
+    <a href="calendar.html" data-page="calendar">Calendar</a>
+    <a href="gantt.html" data-page="gantt">Timeline</a>
+    <a href="chat.html" data-page="chat">Chat</a>
+  </div>
+  <div class="nav-user">
+    <span id="nav-name"></span>
+    <div class="avatar" id="nav-avatar" onclick="switchUser()" title="Switch user">YO</div>
+  </div>
+</nav>
+
+<div class="page">
+  <div style="margin-bottom:1.5rem">
+    <div class="mono" style="font-size:11px;color:var(--accent);letter-spacing:0.08em;margin-bottom:4px">PROJECT CALENDAR</div>
+    <h1 class="serif" style="font-size:28px">Schedule & milestones</h1>
+  </div>
+
+  <div class="filter-row" id="filter-row">
+    <button class="filter-btn active" data-filter="">All phases</button>
+  </div>
+
+  <div class="cal-layout">
+    <div>
+      <div class="cal-nav">
+        <button class="btn btn-ghost btn-sm" id="prev-btn">← Prev</button>
+        <div class="month-title" id="month-title"></div>
+        <button class="btn btn-ghost btn-sm" id="next-btn">Next →</button>
+      </div>
+      <div class="dow-row">
+        <div class="dow-cell">Sun</div><div class="dow-cell">Mon</div>
+        <div class="dow-cell">Tue</div><div class="dow-cell">Wed</div>
+        <div class="dow-cell">Thu</div><div class="dow-cell">Fri</div>
+        <div class="dow-cell">Sat</div>
+      </div>
+      <div class="cal-grid" id="cal-grid"></div>
+
+      <div class="legend-section">
+        <div class="legend-title">Legend</div>
+        <div class="legend-items" id="legend-items"></div>
+      </div>
+    </div>
+
+    <div class="sidebar-card" id="sidebar">
+      <div class="no-select" id="no-select">Click a day to view details and add comments</div>
+      <div id="day-detail" style="display:none">
+        <div class="sidebar-date" id="detail-date"></div>
+        <div id="detail-phase"></div>
+        <div id="detail-meeting" style="display:none;margin-bottom:10px">
+          <span style="font-size:12px;color:#C8391A;font-weight:500">📅 Advising session</span>
+        </div>
+        <hr>
+        <div style="font-size:12px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Comments</div>
+        <div class="comments-list" id="comments-list"></div>
+        <div class="comment-input-row">
+          <textarea id="comment-input" placeholder="Add a comment…" style="min-height:52px;font-size:13px;flex:1"></textarea>
+          <button class="btn btn-primary btn-sm" onclick="submitComment()" style="height:36px;align-self:flex-end">Post</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="js/data.js"></script>
+<script>
+markActive('calendar');
+updateNavUser();
+
+const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+const today = new Date();
+let curMonth = 4, curYear = 2025;
+let selectedKey = null;
+let activeFilter = null;
+
+function switchUser() {
+  const users = Object.keys(USERS);
+  const cur = currentUser();
+  const next = users[(users.indexOf(cur)+1) % users.length];
+  saveData('currentUser', next);
+  updateNavUser();
+}
+
+PHASES.forEach((p,i) => {
+  const b = document.createElement('button');
+  b.className = 'filter-btn'; b.textContent = p.label; b.dataset.filter = i;
+  b.style.cssText = `border-color:${p.border}`;
+  document.getElementById('filter-row').appendChild(b);
+});
+document.getElementById('filter-row').addEventListener('click', e => {
+  const btn = e.target.closest('.filter-btn');
+  if (!btn) return;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  activeFilter = btn.dataset.filter === '' ? null : parseInt(btn.dataset.filter);
+  render();
+});
+
+const legendItems = document.getElementById('legend-items');
+PHASES.forEach(p => {
+  const item = document.createElement('div');
+  item.className = 'legend-item';
+  item.innerHTML = `<div class="leg-dot" style="background:${p.border}"></div>${p.label}`;
+  legendItems.appendChild(item);
+});
+const mleg = document.createElement('div');
+mleg.className = 'legend-item';
+mleg.innerHTML = `<div class="leg-ring"></div>Advising session`;
+legendItems.appendChild(mleg);
+const cleg = document.createElement('div');
+cleg.className = 'legend-item';
+cleg.innerHTML = `<div class="leg-dot" style="background:var(--accent)"></div>Has comments`;
+legendItems.appendChild(cleg);
+
+function render() {
+  const grid = document.getElementById('cal-grid');
+  grid.innerHTML = '';
+  document.getElementById('month-title').textContent = `${MONTHS[curMonth]} ${curYear}`;
+
+  const first = new Date(curYear, curMonth, 1);
+  const dow = first.getDay();
+  const dim = new Date(curYear, curMonth+1, 0).getDate();
+  const prevDim = new Date(curYear, curMonth, 0).getDate();
+  const cells = [];
+  for (let i = dow-1; i >= 0; i--) cells.push({d:new Date(curYear,curMonth-1,prevDim-i),other:true});
+  for (let d=1; d<=dim; d++) cells.push({d:new Date(curYear,curMonth,d),other:false});
+  const rem = 42 - cells.length;
+  for (let d=1; d<=rem; d++) cells.push({d:new Date(curYear,curMonth+1,d),other:true});
+
+  const allComments = loadData('dayComments', {});
+
+  cells.forEach(({d, other}) => {
+    const cell = document.createElement('div');
+    cell.className = 'day-cell' + (other?' other-month':'');
+
+    const phase = getPhase(d);
+    const meeting = isMeeting(d);
+    const key = dateKey(d);
+    const hasComments = allComments[key] && allComments[key].length > 0;
+    const phaseIdx = phase ? PHASES.indexOf(phase) : -1;
+    const filtered = activeFilter !== null && phaseIdx !== activeFilter;
+
+    if (phase && !filtered) {
+      cell.style.background = phase.bg;
+      cell.style.borderColor = phase.border;
+    }
+    if (meeting && !filtered) cell.classList.add('advising');
+    if (key === selectedKey) cell.classList.add('selected');
+
+    const numEl = document.createElement('div');
+    numEl.className = 'day-num';
+    numEl.style.color = (phase && !filtered) ? phase.text : 'var(--text)';
+    numEl.textContent = d.getDate();
+    cell.appendChild(numEl);
+
+    if (phase && !filtered && dateKey(d) === dateKey(phase.start)) {
+      const tag = document.createElement('div');
+      tag.className = 'phase-label-tag';
+      tag.style.cssText = `background:${phase.border};color:#fff`;
+      tag.textContent = phase.label;
+      cell.appendChild(tag);
+    }
+    if (meeting && !filtered) {
+      const dot = document.createElement('span');
+      dot.className = 'meet-dot';
+      cell.appendChild(dot);
+    }
+    if (hasComments) {
+      const dot = document.createElement('span');
+      dot.className = 'comment-dot';
+      cell.appendChild(dot);
+    }
+
+    if (!other) {
+      cell.addEventListener('click', () => selectDay(d));
+    }
+    grid.appendChild(cell);
+  });
+}
+
+function selectDay(d) {
+  selectedKey = dateKey(d);
+  render();
+  document.getElementById('no-select').style.display = 'none';
+  document.getElementById('day-detail').style.display = 'block';
+  document.getElementById('detail-date').textContent = fmtDate(d);
+
+  const phase = getPhase(d);
+  const phaseEl = document.getElementById('detail-phase');
+  if (phase) {
+    phaseEl.innerHTML = `<span class="sidebar-phase" style="background:${phase.bg};color:${phase.text}">${phase.label}</span>`;
+  } else {
+    phaseEl.innerHTML = '';
+  }
+  const meetEl = document.getElementById('detail-meeting');
+  meetEl.style.display = isMeeting(d) ? 'block' : 'none';
+  renderComments();
+}
+
+function renderComments() {
+  const list = document.getElementById('comments-list');
+  const all = loadData('dayComments', {});
+  const comments = all[selectedKey] || [];
+  list.innerHTML = '';
+  if (!comments.length) {
+    list.innerHTML = '<div style="font-size:13px;color:var(--text-3);padding:8px 0">No comments yet.</div>';
+    return;
+  }
+  comments.forEach(c => {
+    const u = USERS[c.uid];
+    const item = document.createElement('div');
+    item.className = 'comment-item';
+    item.innerHTML = `
+      <div class="comment-av" style="background:${u.color}">${u.initials}</div>
+      <div class="comment-body">
+        <div class="comment-author">${u.name}<span class="comment-time">${c.time}</span></div>
+        <div class="comment-text">${c.text}</div>
+      </div>`;
+    list.appendChild(item);
+  });
+  list.scrollTop = list.scrollHeight;
+}
+
+function submitComment() {
+  const input = document.getElementById('comment-input');
+  const text = input.value.trim();
+  if (!text || !selectedKey) return;
+  const all = loadData('dayComments', {});
+  if (!all[selectedKey]) all[selectedKey] = [];
+  all[selectedKey].push({ uid: currentUser(), text, time: fmtTime() });
+  saveData('dayComments', all);
+  input.value = '';
+  renderComments();
+  render();
+}
+
+document.getElementById('comment-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitComment(); }
+});
+document.getElementById('prev-btn').addEventListener('click', () => { curMonth--; if(curMonth<0){curMonth=11;curYear--;} render(); });
+document.getElementById('next-btn').addEventListener('click', () => { curMonth++; if(curMonth>11){curMonth=0;curYear++;} render(); });
+
+render();
+</script>
+</body>
+</html>
