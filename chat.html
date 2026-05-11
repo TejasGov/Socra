@@ -166,6 +166,7 @@
   </div>
 </div>
 
+<script src="config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/data.js"></script>
 <script>
@@ -175,8 +176,6 @@ updateNavUser();
 let currentChannel = 'general';
 let pinnedDate = null;
 
-
-
 function buildUserList() {
   const el = document.getElementById('user-list');
   el.innerHTML = '';
@@ -184,13 +183,37 @@ function buildUserList() {
   Object.entries(USERS).forEach(([uid, u]) => {
     const row = document.createElement('div');
     row.className = 'user-row' + (uid === cur ? ' active-user' : '');
-    row.innerHTML = `
-      <div class="user-av" style="background:${u.color}">${u.initials}</div>
-      <div>
-        <div class="user-name">${u.name.replace(' (Owner)','')}${uid==='owner'?'<span class="you-badge">you</span>':''}</div>
-        <div class="user-role">${uid==='owner'?'Project lead':'Collaborator'}</div>
-      </div>
-      <div class="online-dot"></div>`;
+    
+    const av = document.createElement('div');
+    av.className = 'user-av';
+    av.style.background = u.color;
+    av.textContent = u.initials;
+    
+    const info = document.createElement('div');
+    const name = document.createElement('div');
+    name.className = 'user-name';
+    name.textContent = u.name.replace(' (Owner)','');
+    if (uid === cur) {
+      const badge = document.createElement('span');
+      badge.className = 'you-badge';
+      badge.textContent = 'you';
+      name.appendChild(badge);
+    }
+    
+    const role = document.createElement('div');
+    role.className = 'user-role';
+    role.textContent = uid === 'owner' ? 'Project lead' : 'Collaborator';
+    
+    info.appendChild(name);
+    info.appendChild(role);
+    
+    row.appendChild(av);
+    row.appendChild(info);
+    
+    const dot = document.createElement('div');
+    dot.className = 'online-dot';
+    row.appendChild(dot);
+    
     el.appendChild(row);
   });
 }
@@ -198,7 +221,7 @@ function renderUserList() { buildUserList(); }
 buildUserList();
 
 function renderPermissions() {
-  const perms = loadData('chatPerms', { tejas: true, atshal: true });
+  const perms = loadData('chatPerms', {});
   const el = document.getElementById('permissions-list');
   el.innerHTML = '';
   const cur = currentUser();
@@ -207,21 +230,43 @@ function renderPermissions() {
     if (uid === 'owner') {
       const row = document.createElement('div');
       row.className = 'perm-row';
-      row.innerHTML = `<div class="perm-av-sm" style="background:${u.color}">${u.initials}</div><div class="perm-name">${u.name.replace(' (Owner)','')}</div><span class="owner-badge">Owner</span>`;
+      row.innerHTML = `<div class="perm-av-sm" style="background:${u.color}">${u.initials}</div><div class="perm-name">${u.name}</div><span class="owner-badge">Owner</span>`;
       el.appendChild(row);
       return;
     }
     const allowed = perms[uid] !== false;
     const row = document.createElement('div');
     row.className = 'perm-row';
-    const disabled = cur !== 'owner' ? 'disabled style="opacity:.5;cursor:not-allowed"' : '';
-    row.innerHTML = `
-      <div class="perm-av-sm" style="background:${u.color}">${u.initials}</div>
-      <div class="perm-name">${u.name}</div>
-      <label class="perm-toggle" ${disabled}>
-        <input type="checkbox" ${allowed?'checked':''} onchange="togglePerm('${uid}',this.checked)" ${cur!=='owner'?'disabled':''}>
-        <span class="perm-slider"></span>
-      </label>`;
+    const disabled = cur !== 'owner';
+    
+    const av = document.createElement('div');
+    av.className = 'perm-av-sm';
+    av.style.background = u.color;
+    av.textContent = u.initials;
+    
+    const name = document.createElement('div');
+    name.className = 'perm-name';
+    name.textContent = u.name;
+    
+    const label = document.createElement('label');
+    label.className = 'perm-toggle';
+    if (disabled) label.style.cssText = 'opacity:.5;cursor:not-allowed';
+    
+    const input = document.createElement('input');
+    input.type = 'checkbox';
+    input.checked = allowed;
+    input.disabled = disabled;
+    input.onchange = (e) => togglePerm(uid, e.target.checked);
+    
+    const slider = document.createElement('span');
+    slider.className = 'perm-slider';
+    
+    label.appendChild(input);
+    label.appendChild(slider);
+    
+    row.appendChild(av);
+    row.appendChild(name);
+    row.appendChild(label);
     el.appendChild(row);
   });
 
@@ -234,18 +279,18 @@ function renderPermissions() {
 }
 renderPermissions();
 
-function togglePerm(uid, val) {
+async function togglePerm(uid, val) {
   if (currentUser() !== 'owner') return;
-  const perms = loadData('chatPerms', { tejas: true, atshal: true });
+  const perms = loadData('chatPerms', {});
   perms[uid] = val;
-  socket.emit('updatePerms', perms);
+  await dbUpdatePerms({ [uid]: val });
 }
 
 function canPost() {
-  const uid = currentUser();
-  if (uid === 'owner') return true;
-  const perms = loadData('chatPerms', { tejas: true, atshal: true });
-  return perms[uid] !== false;
+  const cur = currentUser();
+  if (cur === 'owner') return true;
+  const perms = loadData('chatPerms', {});
+  return perms[cur] !== false;
 }
 
 function switchChannel(ch, el) {
@@ -277,30 +322,58 @@ function renderMessages() {
       area.appendChild(div);
       lastDay = day;
     }
-    const u = USERS[m.uid];
+    
+    // Fallback if uid is not in our mock USERS map (e.g. real Supabase ID)
+    const u = USERS[m.uid] || USERS['tejas'];
+    
     const group = document.createElement('div');
     group.className = 'msg-group';
-    let extra = '';
-    if (m.pinnedDate) {
-      const phase = getPhase(new Date(m.pinnedDate));
-      extra = `<div class="msg-date-pin">📅 ${m.pinnedDateLabel}${phase ? ' · ' + phase.label : ''}</div>`;
+    
+    const av = document.createElement('div');
+    av.className = 'msg-av';
+    av.style.background = u.color;
+    av.textContent = u.initials;
+    
+    const content = document.createElement('div');
+    content.className = 'msg-content';
+    
+    const meta = document.createElement('div');
+    meta.className = 'msg-meta';
+    
+    const author = document.createElement('span');
+    author.className = 'msg-author';
+    author.textContent = u.name;
+    
+    const time = document.createElement('span');
+    time.className = 'msg-time';
+    time.textContent = m.time;
+    
+    meta.appendChild(author);
+    meta.appendChild(time);
+    
+    const text = document.createElement('div');
+    text.className = 'msg-text';
+    text.textContent = m.text; // SECURE: Uses textContent to prevent XSS
+    
+    content.appendChild(meta);
+    content.appendChild(text);
+    
+    if (m.pinned_date) {
+      const phase = getPhase(new Date(m.pinned_date));
+      const pin = document.createElement('div');
+      pin.className = 'msg-date-pin';
+      pin.textContent = `📅 ${m.pinned_date_label}${phase ? ' · ' + phase.label : ''}`;
+      content.appendChild(pin);
     }
-    group.innerHTML = `
-      <div class="msg-av" style="background:${u.color}">${u.initials}</div>
-      <div class="msg-content">
-        <div class="msg-meta">
-          <span class="msg-author">${u.name.replace(' (Owner)','')}</span>
-          <span class="msg-time">${m.time}</span>
-        </div>
-        <div class="msg-text">${m.text}</div>
-        ${extra}
-      </div>`;
+    
+    group.appendChild(av);
+    group.appendChild(content);
     area.appendChild(group);
   });
   area.scrollTop = area.scrollHeight;
 }
 
-function sendMessage() {
+async function sendMessage() {
   if (!canPost()) {
     alert('You don\'t have permission to post in this channel. Ask the project owner.');
     return;
@@ -310,7 +383,6 @@ function sendMessage() {
   if (!text) return;
 
   const msg = {
-    uid: currentUser(),
     text,
     time: fmtTime(),
     date: new Date().toLocaleDateString('en-US', {month:'long',day:'numeric',year:'numeric'})
@@ -319,7 +391,9 @@ function sendMessage() {
     msg.pinnedDate = pinnedDate;
     msg.pinnedDateLabel = document.getElementById('pinned-date-label').textContent;
   }
-  socket.emit('sendMessage', { channel: currentChannel, msg });
+  
+  await dbSendMessage(currentChannel, msg);
+  
   input.value = '';
   clearPin();
 }
@@ -339,13 +413,13 @@ function pinDate(dateStr, label) {
 function renderPinnedDates() {
   const allComments = loadData('dayComments', {});
   const allMsgs = ['general','research','dev'].flatMap(ch => {
-    return (loadData('chatMsgs_' + ch, [])).filter(m => m.pinnedDate);
+    return (loadData('chatMsgs_' + ch, [])).filter(m => m.pinned_date);
   });
 
   const dateMap = {};
   allMsgs.forEach(m => {
-    if (!dateMap[m.pinnedDate]) dateMap[m.pinnedDate] = { label: m.pinnedDateLabel, msgs: [] };
-    dateMap[m.pinnedDate].msgs.push(m);
+    if (!dateMap[m.pinned_date]) dateMap[m.pinned_date] = { label: m.pinned_date_label, msgs: [] };
+    dateMap[m.pinned_date].msgs.push(m);
   });
   Object.entries(allComments).forEach(([k, v]) => {
     if (v.length && !dateMap[k]) {
@@ -368,14 +442,35 @@ function renderPinnedDates() {
     const d = new Date(dateStr);
     const phase = getPhase(d);
     const preview = info.msgs[info.msgs.length-1];
-    const previewU = preview ? USERS[preview.uid] : null;
+    const previewU = preview ? (USERS[preview.uid] || USERS['tejas']) : null;
+    
     const item = document.createElement('div');
     item.className = 'pinned-item';
-    item.innerHTML = `
-      <div class="pinned-date">${info.label || fmtShort(d)}</div>
-      ${phase ? `<div class="pinned-phase" style="color:${phase.text}">${phase.label}</div>` : ''}
-      <div class="pinned-preview">${previewU ? previewU.name.replace(' (Owner)','') + ': ' : ''}${preview ? preview.text || (preview.uid ? '' : '') : ''}</div>
-      <div class="pinned-count">${info.msgs.length} comment${info.msgs.length>1?'s':''}</div>`;
+    
+    const dateEl = document.createElement('div');
+    dateEl.className = 'pinned-date';
+    dateEl.textContent = info.label || fmtShort(d);
+    
+    item.appendChild(dateEl);
+    
+    if (phase) {
+      const phaseEl = document.createElement('div');
+      phaseEl.className = 'pinned-phase';
+      phaseEl.style.color = phase.text;
+      phaseEl.textContent = phase.label;
+      item.appendChild(phaseEl);
+    }
+    
+    const previewEl = document.createElement('div');
+    previewEl.className = 'pinned-preview';
+    previewEl.textContent = (previewU ? previewU.name.replace(' (Owner)','') + ': ' : '') + (preview ? preview.text : '');
+    item.appendChild(previewEl);
+    
+    const countEl = document.createElement('div');
+    countEl.className = 'pinned-count';
+    countEl.textContent = `${info.msgs.length} comment${info.msgs.length>1?'s':''}`;
+    item.appendChild(countEl);
+    
     item.addEventListener('click', () => pinDate(dateStr, info.label || fmtShort(d)));
     list.appendChild(item);
   });
@@ -389,7 +484,6 @@ document.getElementById('msg-input').addEventListener('input', function() {
   this.style.height = Math.min(this.scrollHeight, 120) + 'px';
 });
 
-// Pin date via calendar link
 const params = new URLSearchParams(location.search);
 if (params.get('pinDate')) {
   const d = new Date(params.get('pinDate'));

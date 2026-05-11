@@ -1,14 +1,17 @@
 // SUPABASE CONFIGURATION
-// Replace these with your actual Supabase Project URL and Anon Key
-const supabaseUrl = 'ycvdokwyzwrjmentfalh';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InljdmRva3d5endyam1lbnRmYWxoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgyNTc0OTksImV4cCI6MjA5MzgzMzQ5OX0.FTgbwf0w-MGelqc4iMwmxSoGJrnk4rjdGy4i7iaXSZk';
-const supabase = supabaseUrl !== 'YOUR_SUPABASE_URL' ? window.supabase.createClient(supabaseUrl, supabaseKey) : null;
+const supabaseUrl = window.ENV.SUPABASE_URL;
+const supabaseKey = window.ENV.SUPABASE_KEY;
+const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
-// Authentication Check
-const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-if (!token && window.location.pathname.indexOf('login.html') === -1) {
-  window.location.href = 'login.html';
-}
+// Global State
+window.serverData = {
+  chatPerms: {},
+  dayComments: {},
+  chatMsgs_general: [],
+  chatMsgs_research: [],
+  chatMsgs_dev: [],
+  phaseStatuses: {}
+};
 
 const PHASES = [
   { label: "Research + papers", start: new Date(2026, 4, 15), end: new Date(2026, 5, 10), bg: "#EEEDFE", border: "#534AB7", text: "#3C3489" },
@@ -26,42 +29,37 @@ while (_md <= new Date(2026, 7, 20)) {
   _md = new Date(_md.getTime() + 14 * 86400000);
 }
 
+// User Metadata (Mapping Supabase IDs to names/initials should be done via a profile table, 
+// but we'll use a local map for now to preserve the UI style)
 const USERS = {
-  owner: { name: "Paul Dickson", initials: "PD", color: "#2D5016" },
-  tejas: { name: "Tejas Govind", initials: "TG", color: "#185FA5" },
-  atshal: { name: "Atshal Ahmed Khan", initials: "AK", color: "#993556" },
+  'owner': { name: "Paul Dickson", initials: "PD", color: "#2D5016" },
+  'tejas': { name: "Tejas Govind", initials: "TG", color: "#185FA5" },
+  'atshal': { name: "Atshal Ahmed Khan", initials: "AK", color: "#993556" },
 };
 
-function dateKey(d) { return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; }
-function getPhase(d) { const t = d.getTime(); return PHASES.find(p => t >= p.start.getTime() && t < p.end.getTime()) || null; }
-function isMeeting(d) { return MEETINGS.some(m => dateKey(m) === dateKey(d)); }
-function fmtDate(d) { return d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }); }
-function fmtShort(d) { return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }); }
-function fmtTime() { return new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }); }
-
-window.serverData = {
-  chatPerms: { tejas: true, atshal: true },
-  dayComments: {},
-  chatMsgs_general: [],
-  chatMsgs_research: [],
-  chatMsgs_dev: [],
-  phaseStatuses: {}
-};
+// Authentication Check
+function checkAuth() {
+  const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+  if (!token && window.location.pathname.indexOf('login.html') === -1) {
+    window.location.href = 'login.html';
+    return false;
+  }
+  return true;
+}
 
 // --- SUPABASE FETCH & REALTIME ---
 async function initSupabaseData() {
-  if (!supabase) {
-    console.warn("Supabase not configured yet. Add URL and Key.");
-    return;
-  }
+  if (!checkAuth()) return;
+
+  // Clear current data before fetching fresh
+  window.serverData.chatMsgs_general = [];
+  window.serverData.chatMsgs_research = [];
+  window.serverData.chatMsgs_dev = [];
+  window.serverData.dayComments = {};
 
   // Fetch initial data
   const { data: msgs } = await supabase.from('chat_messages').select('*').order('created_at', { ascending: true });
-  if (msgs) {
-    msgs.forEach(m => {
-      window.serverData['chatMsgs_' + m.channel].push(m);
-    });
-  }
+  if (msgs) msgs.forEach(m => window.serverData['chatMsgs_' + m.channel].push(m));
 
   const { data: comments } = await supabase.from('day_comments').select('*');
   if (comments) {
@@ -72,47 +70,31 @@ async function initSupabaseData() {
   }
 
   const { data: statuses } = await supabase.from('phase_statuses').select('*');
-  if (statuses) {
-    statuses.forEach(s => window.serverData.phaseStatuses[s.phase_index] = s.status);
-  }
+  if (statuses) statuses.forEach(s => window.serverData.phaseStatuses[s.phase_index] = s.status);
 
   const { data: perms } = await supabase.from('chat_perms').select('*');
-  if (perms) {
-    perms.forEach(p => window.serverData.chatPerms[p.uid] = p.can_post);
-  }
+  if (perms) perms.forEach(p => window.serverData.chatPerms[p.uid] = p.can_post);
 
   triggerRenders();
 
   // Listen to realtime changes
-  supabase.channel('public:chat_messages')
+  supabase.channel('public_changes')
     .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chat_messages' }, payload => {
       window.serverData['chatMsgs_' + payload.new.channel].push(payload.new);
-      if (typeof currentChannel !== 'undefined' && currentChannel === payload.new.channel && typeof renderMessages === 'function') renderMessages();
-      if (typeof renderPinnedDates === 'function') renderPinnedDates();
+      triggerRenders();
     })
-    .subscribe();
-
-  supabase.channel('public:day_comments')
     .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'day_comments' }, payload => {
       if (!window.serverData.dayComments[payload.new.date_key]) window.serverData.dayComments[payload.new.date_key] = [];
       window.serverData.dayComments[payload.new.date_key].push(payload.new);
-      if (typeof selectedKey !== 'undefined' && selectedKey === payload.new.date_key && typeof renderComments === 'function') renderComments();
-      if (typeof render === 'function') render();
-      if (typeof renderPinnedDates === 'function') renderPinnedDates();
+      triggerRenders();
     })
-    .subscribe();
-
-  supabase.channel('public:phase_statuses')
     .on('postgres_changes', { event: '*', schema: 'public', table: 'phase_statuses' }, payload => {
       window.serverData.phaseStatuses[payload.new.phase_index] = payload.new.status;
-      if (typeof renderPhases === 'function') renderPhases();
+      triggerRenders();
     })
-    .subscribe();
-
-  supabase.channel('public:chat_perms')
     .on('postgres_changes', { event: '*', schema: 'public', table: 'chat_perms' }, payload => {
       window.serverData.chatPerms[payload.new.uid] = payload.new.can_post;
-      if (typeof renderPermissions === 'function') renderPermissions();
+      triggerRenders();
     })
     .subscribe();
 }
@@ -126,7 +108,12 @@ function triggerRenders() {
   if (typeof renderComments === 'function' && typeof selectedKey !== 'undefined' && selectedKey) renderComments();
 }
 
-initSupabaseData();
+// Helper Functions
+function dateKey(d) { return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; }
+function getPhase(d) { const t = d.getTime(); return PHASES.find(p => t >= p.start.getTime() && t < p.end.getTime()) || null; }
+function fmtDate(d) { return d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }); }
+function fmtShort(d) { return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }); }
+function fmtTime() { return new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }); }
 
 function loadData(key, def) {
   return window.serverData[key] !== undefined ? window.serverData[key] : def;
@@ -158,3 +145,30 @@ function logout() {
   sessionStorage.removeItem('currentUser');
   window.location.href = 'login.html';
 }
+
+// Centralized Data Mutation Functions (to replace socket.emit)
+async function dbSendMessage(channel, msg) {
+  const { error } = await supabase.from('chat_messages').insert([{
+    channel,
+    uid: currentUser(),
+    text: msg.text,
+    time: msg.time,
+    date: msg.date,
+    pinned_date: msg.pinnedDate,
+    pinned_date_label: msg.pinnedDateLabel
+  }]);
+  if (error) console.error("Error sending message:", error);
+}
+
+async function dbUpdatePhaseStatus(idx, status) {
+  const { error } = await supabase.from('phase_statuses').upsert({ phase_index: idx, status });
+  if (error) console.error("Error updating status:", error);
+}
+
+async function dbUpdatePerms(perms) {
+  for (const [uid, canPost] of Object.entries(perms)) {
+    await supabase.from('chat_perms').upsert({ uid: uid, can_post: canPost });
+  }
+}
+
+initSupabaseData();

@@ -122,6 +122,7 @@
   </div>
 </div>
 
+<script src="config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/data.js"></script>
 <script>
@@ -133,8 +134,6 @@ const today = new Date();
 let curMonth = 4, curYear = 2025;
 let selectedKey = null;
 let activeFilter = null;
-
-
 
 PHASES.forEach((p,i) => {
   const b = document.createElement('button');
@@ -155,17 +154,13 @@ const legendItems = document.getElementById('legend-items');
 PHASES.forEach(p => {
   const item = document.createElement('div');
   item.className = 'legend-item';
-  item.innerHTML = `<div class="leg-dot" style="background:${p.border}"></div>${p.label}`;
+  const dot = document.createElement('div');
+  dot.className = 'leg-dot';
+  dot.style.background = p.border;
+  item.appendChild(dot);
+  item.appendChild(document.createTextNode(p.label));
   legendItems.appendChild(item);
 });
-const mleg = document.createElement('div');
-mleg.className = 'legend-item';
-mleg.innerHTML = `<div class="leg-ring"></div>Advising session`;
-legendItems.appendChild(mleg);
-const cleg = document.createElement('div');
-cleg.className = 'legend-item';
-cleg.innerHTML = `<div class="leg-dot" style="background:var(--accent)"></div>Has comments`;
-legendItems.appendChild(cleg);
 
 function render() {
   const grid = document.getElementById('cal-grid');
@@ -242,10 +237,14 @@ function selectDay(d) {
 
   const phase = getPhase(d);
   const phaseEl = document.getElementById('detail-phase');
+  phaseEl.innerHTML = '';
   if (phase) {
-    phaseEl.innerHTML = `<span class="sidebar-phase" style="background:${phase.bg};color:${phase.text}">${phase.label}</span>`;
-  } else {
-    phaseEl.innerHTML = '';
+    const span = document.createElement('span');
+    span.className = 'sidebar-phase';
+    span.style.background = phase.bg;
+    span.style.color = phase.text;
+    span.textContent = phase.label;
+    phaseEl.appendChild(span);
   }
   const meetEl = document.getElementById('detail-meeting');
   meetEl.style.display = isMeeting(d) ? 'block' : 'none';
@@ -262,25 +261,53 @@ function renderComments() {
     return;
   }
   comments.forEach(c => {
-    const u = USERS[c.uid];
+    const u = USERS[c.uid] || { name: 'User', initials: 'U', color: '#999' };
     const item = document.createElement('div');
     item.className = 'comment-item';
-    item.innerHTML = `
-      <div class="comment-av" style="background:${u.color}">${u.initials}</div>
-      <div class="comment-body">
-        <div class="comment-author">${u.name}<span class="comment-time">${c.time}</span></div>
-        <div class="comment-text">${c.text}</div>
-      </div>`;
+    
+    const av = document.createElement('div');
+    av.className = 'comment-av';
+    av.style.background = u.color;
+    av.textContent = u.initials;
+    
+    const body = document.createElement('div');
+    body.className = 'comment-body';
+    
+    const author = document.createElement('div');
+    author.className = 'comment-author';
+    author.textContent = u.name;
+    
+    const time = document.createElement('span');
+    time.className = 'comment-time';
+    time.textContent = c.time;
+    author.appendChild(time);
+    
+    const text = document.createElement('div');
+    text.className = 'comment-text';
+    text.textContent = c.text; // SECURE: Uses textContent
+    
+    body.appendChild(author);
+    body.appendChild(text);
+    
+    item.appendChild(av);
+    item.appendChild(body);
     list.appendChild(item);
   });
   list.scrollTop = list.scrollHeight;
 }
 
-function submitComment() {
+async function submitComment() {
   const input = document.getElementById('comment-input');
   const text = input.value.trim();
   if (!text || !selectedKey) return;
-  socket.emit('addComment', { dateKey: selectedKey, comment: { uid: currentUser(), text, time: fmtTime() } });
+  
+  const { error } = await supabase.from('day_comments').insert([{
+    date_key: selectedKey,
+    text: text,
+    time: fmtTime()
+  }]);
+  
+  if (error) console.error("Error adding comment:", error);
   input.value = '';
 }
 

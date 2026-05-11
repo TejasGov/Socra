@@ -51,6 +51,7 @@ document.getElementById('login-form').addEventListener('submit', async (e) => {
   const remember = document.getElementById('rememberMe').checked;
   const errorMsg = document.getElementById('error-msg');
 
+  // Using the simple three person auth logic
   const MOCK_CREDENTIALS = {
     'PD01': { pwd: '0202', uid: 'owner' },
     'TG05': { pwd: '1515', uid: 'tejas' },

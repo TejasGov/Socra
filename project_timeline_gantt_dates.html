@@ -1,0 +1,95 @@
+
+<style>
+  .sr-only { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0,0,0,0); }
+</style>
+
+<div style="padding: 1.5rem 1rem 1rem; font-family: var(--font-sans);">
+  <h2 class="sr-only">Project timeline from May to August 2025</h2>
+  <div id="gantt"></div>
+</div>
+
+<script>
+const ORIGIN = new Date(2025, 4, 15);
+const END    = new Date(2025, 7, 20);
+const span   = Math.round((END - ORIGIN) / 86400000);
+
+function daysFrom(y, m, d) {
+  return Math.round((new Date(y, m - 1, d) - ORIGIN) / 86400000);
+}
+
+const phases = [
+  { label:"Research + papers",        start:daysFrom(2025,5,15), end:daysFrom(2025,6,10),  startLabel:"May 15",  endLabel:"Jun 10",  color:"#534AB7", textColor:"#EEEDFE" },
+  { label:"Core system development",  start:daysFrom(2025,6,10), end:daysFrom(2025,6,30),  startLabel:"Jun 10",  endLabel:"Jun 30",  color:"#0F6E56", textColor:"#E1F5EE" },
+  { label:"AI tutor + RAG",           start:daysFrom(2025,7,1),  end:daysFrom(2025,7,20),  startLabel:"Jul 1",   endLabel:"Jul 20",  color:"#185FA5", textColor:"#E6F1FB" },
+  { label:"Testing + debugging",      start:daysFrom(2025,7,20), end:daysFrom(2025,7,31),  startLabel:"Jul 20",  endLabel:"Jul 31",  color:"#BA7517", textColor:"#FAEEDA" },
+  { label:"UI/design + CSE 115/116",  start:daysFrom(2025,8,1),  end:daysFrom(2025,8,10),  startLabel:"Aug 1",   endLabel:"Aug 10",  color:"#993556", textColor:"#FBEAF0" },
+  { label:"Final polish + demo",      start:daysFrom(2025,8,10), end:daysFrom(2025,8,20),  startLabel:"Aug 10",  endLabel:"Aug 20",  color:"#3B6D11", textColor:"#EAF3DE" },
+];
+
+const months = [
+  { label:"May",    start:0,  days:17 },
+  { label:"June",   start:17, days:30 },
+  { label:"July",   start:47, days:31 },
+  { label:"August", start:78, days:20 },
+];
+
+const gantt = document.getElementById('gantt');
+const LABEL_W = 180;
+
+/* ── month axis ── */
+const axisRow = document.createElement('div');
+axisRow.style.cssText = `display:flex; margin-left:${LABEL_W}px; margin-bottom:6px;`;
+months.forEach(m => {
+  const el = document.createElement('div');
+  el.style.cssText = `flex:${m.days}; text-align:center; font-size:12px; font-weight:500; color:var(--color-text-secondary); padding-bottom:4px; border-bottom:1px solid var(--color-border-tertiary);`;
+  el.textContent = m.label;
+  axisRow.appendChild(el);
+});
+gantt.appendChild(axisRow);
+
+/* ── phase rows ── */
+phases.forEach(p => {
+  const row = document.createElement('div');
+  row.style.cssText = 'display:flex; align-items:center; margin-bottom:10px;';
+
+  /* left label */
+  const lbl = document.createElement('div');
+  lbl.style.cssText = `width:${LABEL_W}px; min-width:${LABEL_W}px; font-size:12px; color:var(--color-text-secondary); text-align:right; padding-right:12px; line-height:1.3;`;
+  lbl.textContent = p.label;
+
+  /* track */
+  const track = document.createElement('div');
+  track.style.cssText = 'flex:1; position:relative; height:38px;';
+
+  /* subtle grid lines */
+  months.forEach(m => {
+    const gl = document.createElement('div');
+    gl.style.cssText = `position:absolute; top:0; bottom:0; left:${(m.start/span)*100}%; width:1px; background:var(--color-border-tertiary);`;
+    track.appendChild(gl);
+  });
+
+  const left  = (p.start / span) * 100;
+  const width = ((p.end - p.start) / span) * 100;
+
+  /* bar */
+  const bar = document.createElement('div');
+  bar.style.cssText = `position:absolute; left:${left}%; width:${width}%; height:38px; border-radius:5px; background:${p.color}; display:flex; align-items:center; justify-content:space-between; padding:0 8px; box-sizing:border-box; overflow:hidden;`;
+
+  /* start date */
+  const ds = document.createElement('span');
+  ds.style.cssText = `font-size:11px; font-weight:500; color:${p.textColor}; opacity:0.9; white-space:nowrap; flex-shrink:0;`;
+  ds.textContent = p.startLabel;
+
+  /* end date */
+  const de = document.createElement('span');
+  de.style.cssText = `font-size:11px; font-weight:500; color:${p.textColor}; opacity:0.9; white-space:nowrap; flex-shrink:0;`;
+  de.textContent = p.endLabel;
+
+  bar.appendChild(ds);
+  bar.appendChild(de);
+  track.appendChild(bar);
+  row.appendChild(lbl);
+  row.appendChild(track);
+  gantt.appendChild(row);
+});
+</script>

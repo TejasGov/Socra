@@ -143,6 +143,7 @@
   </div>
 </div>
 
+<script src="config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/data.js"></script>
 <script>
@@ -182,19 +183,20 @@ function renderPhases() {
     el.innerHTML = `
       <div class="phase-dot" style="background:${p.border}"></div>
       <div class="phase-info">
-        <div class="phase-name">${p.label}</div>
+        <div class="phase-name"></div>
         <div class="phase-dates">${fmtShort(p.start)} – ${fmtShort(p.end)}</div>
       </div>
       <div class="phase-status" style="background:${statusBg};color:${statusTx}">${statusText}</div>
       ${actionBtn}
     `;
+    el.querySelector('.phase-name').textContent = p.label; // Secure textContent
     phaseList.appendChild(el);
   });
 }
 
-function requestComplete(idx) { socket.emit('updatePhaseStatus', { phaseIndex: idx, status: 'requested' }); }
-function markComplete(idx) { socket.emit('updatePhaseStatus', { phaseIndex: idx, status: 'completed' }); }
-function approvePhase(idx) { socket.emit('updatePhaseStatus', { phaseIndex: idx, status: 'completed' }); }
+function requestComplete(idx) { dbUpdatePhaseStatus(idx, 'requested'); }
+function markComplete(idx) { dbUpdatePhaseStatus(idx, 'completed'); }
+function approvePhase(idx) { dbUpdatePhaseStatus(idx, 'completed'); }
 
 const upcoming = MEETINGS.filter(m => m >= today);
 const nextM = upcoming[0];
@@ -216,18 +218,26 @@ async function submitChangePassword() {
   const userId = actualUserIdMap[currentUser()];
   
   if (!oldPassword || !newPassword) return;
-  const res = await fetch('/api/change-password', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ userId, oldPassword, newPassword })
-  });
-  const data = await res.json();
-  if (res.ok) {
-    alert('Password changed successfully. Please log in again.');
-    logout();
-  } else {
+  
+  // Reverting to the mock API behavior as requested
+  try {
+    const res = await fetch('/api/change-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId, oldPassword, newPassword })
+    });
+    const data = await res.json();
+    if (res.ok) {
+      alert('Password changed successfully. Please log in again.');
+      logout();
+    } else {
+      const err = document.getElementById('pwd-err');
+      err.textContent = data.error || 'Failed to change password';
+      err.style.display = 'block';
+    }
+  } catch (e) {
     const err = document.getElementById('pwd-err');
-    err.textContent = data.error || 'Failed to change password';
+    err.textContent = 'Serverless environment: mock API not available.';
     err.style.display = 'block';
   }
 }

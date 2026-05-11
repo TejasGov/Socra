@@ -80,13 +80,12 @@
   </div>
 </div>
 
+<script src="config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/data.js"></script>
 <script>
 markActive('gantt');
 updateNavUser();
-
-
 
 const ORIGIN = new Date(2026,4,15);
 const END = new Date(2026,7,20);
@@ -94,8 +93,6 @@ const SPAN = Math.round((END - ORIGIN) / 86400000);
 const today = new Date();
 
 function pct(d) { return (Math.round((d - ORIGIN)/86400000) / SPAN) * 100; }
-
-const totalElapsed = Math.min(1, Math.max(0, (today - ORIGIN) / (END - ORIGIN)));
 
 const wrap = document.getElementById('gantt-wrap');
 
@@ -154,7 +151,6 @@ PHASES.forEach(p => {
 
   bar.appendChild(ds); bar.appendChild(de);
 
-  // today marker inside bar
   if (today >= p.start && today < p.end) {
     const todayLine = document.createElement('div');
     const tpct = ((today - p.start)/(p.end - p.start))*100;
@@ -168,7 +164,6 @@ PHASES.forEach(p => {
   wrap.appendChild(row);
 });
 
-// Advising row
 const mrow = document.createElement('div');
 mrow.className = 'meeting-row';
 const mlbl = document.createElement('div');
@@ -200,30 +195,34 @@ mrow.appendChild(mlbl);
 mrow.appendChild(mtrack);
 wrap.appendChild(mrow);
 
-// Today line across full gantt
 const todayPct = Math.max(0, Math.min(100, pct(today)));
 const tline = document.createElement('div');
 tline.style.cssText = `position:absolute;top:0;bottom:0;left:calc(200px + ${todayPct}%);width:1.5px;background:#C8391A;opacity:0.4;pointer-events:none;`;
 wrap.style.position = 'relative';
 wrap.appendChild(tline);
 
-// Legend
 const legendRow = document.createElement('div');
 legendRow.className = 'legend-row';
 legendRow.style.marginTop = '1.5rem';
 PHASES.forEach(p => {
   const item = document.createElement('div');
   item.className = 'leg-item';
-  item.innerHTML = `<div class="leg-swatch" style="background:${p.border}"></div>${p.label}`;
+  const swatch = document.createElement('div');
+  swatch.className = 'leg-swatch';
+  swatch.style.background = p.border;
+  item.appendChild(swatch);
+  item.appendChild(document.createTextNode(p.label));
   legendRow.appendChild(item);
 });
 const mleg = document.createElement('div');
 mleg.className = 'leg-item';
-mleg.innerHTML = `<div style="width:10px;height:10px;background:#C8391A;border-radius:2px;transform:rotate(45deg);flex-shrink:0"></div>Advising session`;
+const mdiamond = document.createElement('div');
+mdiamond.style.cssText = 'width:10px;height:10px;background:#C8391A;border-radius:2px;transform:rotate(45deg);flex-shrink:0';
+mleg.appendChild(mdiamond);
+mleg.appendChild(document.createTextNode('Advising session'));
 legendRow.appendChild(mleg);
 wrap.appendChild(legendRow);
 
-// Progress bars
 const progressList = document.getElementById('progress-list');
 function renderPhases() {
   if (!window.serverData) return;
@@ -241,11 +240,26 @@ function renderPhases() {
     let pctVal = status === 'completed' ? 100 : (status === 'requested' ? 90 : 0);
     const row = document.createElement('div');
     row.className = 'progress-row';
-    row.innerHTML = `
-      <div class="progress-label">${p.label}</div>
-      <div class="progress-bar-bg"><div class="progress-bar-fill" style="width:${pctVal}%;background:${p.border}"></div></div>
-      <div class="progress-pct">${pctVal}%</div>
-    `;
+    
+    const label = document.createElement('div');
+    label.className = 'progress-label';
+    label.textContent = p.label;
+    
+    const bg = document.createElement('div');
+    bg.className = 'progress-bar-bg';
+    const fill = document.createElement('div');
+    fill.className = 'progress-bar-fill';
+    fill.style.width = pctVal + '%';
+    fill.style.background = p.border;
+    bg.appendChild(fill);
+    
+    const pctTxt = document.createElement('div');
+    pctTxt.className = 'progress-pct';
+    pctTxt.textContent = pctVal + '%';
+    
+    row.appendChild(label);
+    row.appendChild(bg);
+    row.appendChild(pctTxt);
     progressList.appendChild(row);
   });
   

@@ -22,7 +22,8 @@ CREATE TABLE public.day_comments (
 
 CREATE TABLE public.phase_statuses (
   phase_index integer primary key,
-  status text not null
+  status text not null,
+  updated_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
 CREATE TABLE public.chat_perms (
@@ -37,18 +38,15 @@ alter publication supabase_realtime add table public.phase_statuses;
 alter publication supabase_realtime add table public.chat_perms;
 
 -- 3. Set up Row Level Security (RLS)
--- For simplicity in this migration, we are allowing anon read/write, 
--- but in production you should link this to Supabase Auth.
+-- Since auth is handled via mock client-side logic, we open RLS for anon read/write.
 alter table public.chat_messages enable row level security;
-create policy "Allow all access to chat_messages" on public.chat_messages for all using (true) with check (true);
-
 alter table public.day_comments enable row level security;
-create policy "Allow all access to day_comments" on public.day_comments for all using (true) with check (true);
-
 alter table public.phase_statuses enable row level security;
-create policy "Allow all access to phase_statuses" on public.phase_statuses for all using (true) with check (true);
-
 alter table public.chat_perms enable row level security;
+
+create policy "Allow all access to chat_messages" on public.chat_messages for all using (true) with check (true);
+create policy "Allow all access to day_comments" on public.day_comments for all using (true) with check (true);
+create policy "Allow all access to phase_statuses" on public.phase_statuses for all using (true) with check (true);
 create policy "Allow all access to chat_perms" on public.chat_perms for all using (true) with check (true);
 
 -- 4. Insert initial permissions
