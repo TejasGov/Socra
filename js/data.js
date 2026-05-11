@@ -6,7 +6,7 @@ if (!supabaseUrl || !supabaseKey) {
   console.error("Supabase credentials missing! Check window.ENV or Vercel Environment Variables.");
 }
 
-const supabase = window.supabase ? window.supabase.createClient(supabaseUrl || 'https://placeholder.supabase.co', supabaseKey || 'placeholder') : null;
+const sb = window.supabase ? window.supabase.createClient(supabaseUrl || 'https://placeholder.supabase.co', supabaseKey || 'placeholder') : null;
 
 // Global State
 window.serverData = {
@@ -58,11 +58,11 @@ async function initSupabaseData() {
   triggerRenders();
 
   if (!checkAuth()) return;
-  if (!supabase) return;
+  if (!sb) return;
 
   // Fetch initial data
   try {
-    const { data: msgs, error: msgErr } = await supabase.from('chat_messages').select('*').order('created_at', { ascending: true });
+    const { data: msgs, error: msgErr } = await sb.from('chat_messages').select('*').order('created_at', { ascending: true });
     if (msgErr) console.warn("Error fetching messages:", msgErr);
     if (msgs) {
       window.serverData.chatMsgs_general = [];
@@ -71,7 +71,7 @@ async function initSupabaseData() {
       msgs.forEach(m => window.serverData['chatMsgs_' + m.channel].push(m));
     }
 
-    const { data: comments, error: commErr } = await supabase.from('day_comments').select('*');
+    const { data: comments, error: commErr } = await sb.from('day_comments').select('*');
     if (commErr) console.warn("Error fetching comments:", commErr);
     if (comments) {
       window.serverData.dayComments = {};
@@ -81,18 +81,18 @@ async function initSupabaseData() {
       });
     }
 
-    const { data: statuses, error: statErr } = await supabase.from('phase_statuses').select('*');
+    const { data: statuses, error: statErr } = await sb.from('phase_statuses').select('*');
     if (statErr) console.warn("Error fetching statuses:", statErr);
     if (statuses) statuses.forEach(s => window.serverData.phaseStatuses[s.phase_index] = s.status);
 
-    const { data: perms, error: permErr } = await supabase.from('chat_perms').select('*');
+    const { data: perms, error: permErr } = await sb.from('chat_perms').select('*');
     if (permErr) console.warn("Error fetching permissions:", permErr);
     if (perms) perms.forEach(p => window.serverData.chatPerms[p.uid] = p.can_post);
 
     triggerRenders();
 
     // Listen to realtime changes
-    supabase.channel('public_changes')
+    sb.channel('public_changes')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chat_messages' }, payload => {
         window.serverData['chatMsgs_' + payload.new.channel].push(payload.new);
         triggerRenders();
@@ -165,7 +165,7 @@ function logout() {
 
 // Centralized Data Mutation Functions (to replace socket.emit)
 async function dbSendMessage(channel, msg) {
-  const { error } = await supabase.from('chat_messages').insert([{
+  const { error } = await sb.from('chat_messages').insert([{
     channel,
     uid: currentUser(),
     text: msg.text,
@@ -178,13 +178,13 @@ async function dbSendMessage(channel, msg) {
 }
 
 async function dbUpdatePhaseStatus(idx, status) {
-  const { error } = await supabase.from('phase_statuses').upsert({ phase_index: idx, status });
+  const { error } = await sb.from('phase_statuses').upsert({ phase_index: idx, status });
   if (error) console.error("Error updating status:", error);
 }
 
 async function dbUpdatePerms(perms) {
   for (const [uid, canPost] of Object.entries(perms)) {
-    await supabase.from('chat_perms').upsert({ uid: uid, can_post: canPost });
+    await sb.from('chat_perms').upsert({ uid: uid, can_post: canPost });
   }
 }
 
