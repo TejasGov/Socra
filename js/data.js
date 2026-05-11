@@ -120,7 +120,6 @@ function triggerRenders() {
   if (typeof render === 'function') render();
   if (typeof renderMessages === 'function') renderMessages();
   if (typeof renderPinnedDates === 'function') renderPinnedDates();
-  if (typeof renderPermissions === 'function') renderPermissions();
   if (typeof renderPhases === 'function') renderPhases();
   if (typeof renderComments === 'function' && typeof selectedKey !== 'undefined' && selectedKey) renderComments();
 }
@@ -128,6 +127,7 @@ function triggerRenders() {
 // Helper Functions
 function dateKey(d) { return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; }
 function getPhase(d) { const t = d.getTime(); return PHASES.find(p => t >= p.start.getTime() && t < p.end.getTime()) || null; }
+function isMeeting(d) { const k = dateKey(d); return MEETINGS.some(m => dateKey(m) === k); }
 function fmtDate(d) { return d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }); }
 function fmtShort(d) { return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }); }
 function fmtTime() { return new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }); }

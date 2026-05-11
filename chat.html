@@ -156,11 +156,7 @@
         <div class="pinned-list" id="pinned-list"></div>
       </div>
 
-      <div class="panel-card" id="permissions-card">
-        <div class="panel-header">Permissions</div>
-        <div style="padding:10px 14px 4px;font-size:12px;color:var(--text-2);line-height:1.5">Control who can post comments</div>
-        <div class="permissions-list" id="permissions-list"></div>
-      </div>
+
     </div>
 
   </div>
@@ -220,78 +216,7 @@ function buildUserList() {
 function renderUserList() { buildUserList(); }
 buildUserList();
 
-function renderPermissions() {
-  const perms = loadData('chatPerms', {});
-  const el = document.getElementById('permissions-list');
-  el.innerHTML = '';
-  const cur = currentUser();
 
-  Object.entries(USERS).forEach(([uid, u]) => {
-    if (uid === 'owner') {
-      const row = document.createElement('div');
-      row.className = 'perm-row';
-      row.innerHTML = `<div class="perm-av-sm" style="background:${u.color}">${u.initials}</div><div class="perm-name">${u.name}</div><span class="owner-badge">Owner</span>`;
-      el.appendChild(row);
-      return;
-    }
-    const allowed = perms[uid] !== false;
-    const row = document.createElement('div');
-    row.className = 'perm-row';
-    const disabled = cur !== 'owner';
-    
-    const av = document.createElement('div');
-    av.className = 'perm-av-sm';
-    av.style.background = u.color;
-    av.textContent = u.initials;
-    
-    const name = document.createElement('div');
-    name.className = 'perm-name';
-    name.textContent = u.name;
-    
-    const label = document.createElement('label');
-    label.className = 'perm-toggle';
-    if (disabled) label.style.cssText = 'opacity:.5;cursor:not-allowed';
-    
-    const input = document.createElement('input');
-    input.type = 'checkbox';
-    input.checked = allowed;
-    input.disabled = disabled;
-    input.onchange = (e) => togglePerm(uid, e.target.checked);
-    
-    const slider = document.createElement('span');
-    slider.className = 'perm-slider';
-    
-    label.appendChild(input);
-    label.appendChild(slider);
-    
-    row.appendChild(av);
-    row.appendChild(name);
-    row.appendChild(label);
-    el.appendChild(row);
-  });
-
-  if (cur !== 'owner') {
-    const note = document.createElement('div');
-    note.style.cssText = 'padding:6px 14px 10px;font-size:11px;color:var(--text-3)';
-    note.textContent = 'Only the owner can manage permissions.';
-    el.appendChild(note);
-  }
-}
-renderPermissions();
-
-async function togglePerm(uid, val) {
-  if (currentUser() !== 'owner') return;
-  const perms = loadData('chatPerms', {});
-  perms[uid] = val;
-  await dbUpdatePerms({ [uid]: val });
-}
-
-function canPost() {
-  const cur = currentUser();
-  if (cur === 'owner') return true;
-  const perms = loadData('chatPerms', {});
-  return perms[cur] !== false;
-}
 
 function switchChannel(ch, el) {
   currentChannel = ch;
@@ -374,10 +299,6 @@ function renderMessages() {
 }
 
 async function sendMessage() {
-  if (!canPost()) {
-    alert('You don\'t have permission to post in this channel. Ask the project owner.');
-    return;
-  }
   const input = document.getElementById('msg-input');
   const text = input.value.trim();
   if (!text) return;
