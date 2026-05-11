@@ -301,8 +301,9 @@ async function submitComment() {
   const text = input.value.trim();
   if (!text || !selectedKey) return;
   
-  const { error } = await supabase.from('day_comments').insert([{
+  const { error } = await sb.from('day_comments').insert([{
     date_key: selectedKey,
+    uid: currentUser(),
     text: text,
     time: fmtTime()
   }]);
