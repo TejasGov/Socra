@@ -19,17 +19,17 @@ window.serverData = {
 };
 
 const PHASES = [
-  { label: "Research + papers", start: new Date(2025, 4, 15), end: new Date(2025, 5, 10), bg: "#EEEDFE", border: "#534AB7", text: "#3C3489" },
-  { label: "Core system development", start: new Date(2025, 5, 10), end: new Date(2025, 5, 30), bg: "#E1F5EE", border: "#0F6E56", text: "#085041" },
-  { label: "AI tutor + RAG", start: new Date(2025, 6, 1), end: new Date(2025, 6, 20), bg: "#E6F1FB", border: "#185FA5", text: "#0C447C" },
-  { label: "Testing + debugging", start: new Date(2025, 6, 20), end: new Date(2025, 6, 31), bg: "#FAEEDA", border: "#BA7517", text: "#633806" },
-  { label: "UI/design + CSE 115/116", start: new Date(2025, 7, 1), end: new Date(2025, 7, 10), bg: "#FBEAF0", border: "#993556", text: "#72243E" },
-  { label: "Final polish + demo", start: new Date(2025, 7, 10), end: new Date(2025, 7, 20), bg: "#EAF3DE", border: "#3B6D11", text: "#27500A" },
+  { label: "Research + papers", start: new Date(2026, 4, 15), end: new Date(2026, 5, 10), bg: "#EEEDFE", border: "#534AB7", text: "#3C3489" },
+  { label: "Core system development", start: new Date(2026, 5, 10), end: new Date(2026, 5, 30), bg: "#E1F5EE", border: "#0F6E56", text: "#085041" },
+  { label: "AI tutor + RAG", start: new Date(2026, 6, 1), end: new Date(2026, 6, 20), bg: "#E6F1FB", border: "#185FA5", text: "#0C447C" },
+  { label: "Testing + debugging", start: new Date(2026, 6, 20), end: new Date(2026, 6, 31), bg: "#FAEEDA", border: "#BA7517", text: "#633806" },
+  { label: "UI/design + CSE 115/116", start: new Date(2026, 7, 1), end: new Date(2026, 7, 10), bg: "#FBEAF0", border: "#993556", text: "#72243E" },
+  { label: "Final polish + demo", start: new Date(2026, 7, 10), end: new Date(2026, 7, 20), bg: "#EAF3DE", border: "#3B6D11", text: "#27500A" },
 ];
 
 const MEETINGS = [];
-let _md = new Date(2025, 4, 22);
-while (_md <= new Date(2025, 7, 20)) {
+let _md = new Date(2026, 4, 22);
+while (_md <= new Date(2026, 7, 20)) {
   MEETINGS.push(new Date(_md));
   _md = new Date(_md.getTime() + 14 * 86400000);
 }
