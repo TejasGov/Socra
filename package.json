@@ -1,0 +1,11 @@
+{
+  "name": "tasks-socra",
+  "version": "1.0.0",
+  "scripts": {
+    "build": "echo \"window.ENV = { SUPABASE_URL: '$SUPABASE_URL', SUPABASE_KEY: '$SUPABASE_KEY' };\" > config.js",
+    "start": "serve ."
+  },
+  "devDependencies": {
+    "serve": "^14.2.0"
+  }
+}
