@@ -1,6 +1,19 @@
 <!DOCTYPE html>
+<!-- chat.html — Team chat with Supabase realtime; depends on config.js, js/data.js -->
 <html lang="en">
 <head>
+<meta http-equiv="Content-Security-Policy"
+  content="default-src 'self' https://*.supabase.co wss://*.supabase.co;
+           script-src 'self' https://cdn.jsdelivr.net;
+           style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+           font-src https://fonts.gstatic.com;
+           img-src 'self' data:;
+           connect-src 'self' https://*.supabase.co wss://*.supabase.co;
+           object-src 'none';
+           base-uri 'self';
+           form-action 'self';">
+<meta http-equiv="X-Content-Type-Options" content="nosniff">
+<meta http-equiv="Referrer-Policy" content="no-referrer">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Research Project — Chat</title>
@@ -52,6 +65,8 @@
 .day-divider { display: flex; align-items: center; gap: 10px; margin: 4px 0; }
 .day-divider span { font-size: 11px; color: var(--text-3); white-space: nowrap; }
 .day-divider::before, .day-divider::after { content:''; flex:1; height:0.5px; background: var(--border); }
+.send-error { font-size: 12px; color: var(--red); padding: 0 16px 8px; display: none; }
+.btn-spinner { opacity: 0.6; pointer-events: none; }
 
 /* RIGHT SIDEBAR */
 .right-panel { display: flex; flex-direction: column; gap: 10px; position: sticky; top: calc(var(--nav-h) + 1rem); }
@@ -102,18 +117,17 @@
 
   <div class="chat-layout">
 
-    <!-- LEFT -->
     <div class="left-panel">
       <div class="panel-card">
         <div class="panel-header">Channels</div>
         <div class="channel-list">
-          <div class="channel-row active" data-channel="general" onclick="switchChannel('general',this)">
+          <div class="channel-row active" data-channel="general">
             <span class="channel-hash">#</span> general
           </div>
-          <div class="channel-row" data-channel="research" onclick="switchChannel('research',this)">
+          <div class="channel-row" data-channel="research">
             <span class="channel-hash">#</span> research
           </div>
-          <div class="channel-row" data-channel="dev" onclick="switchChannel('dev',this)">
+          <div class="channel-row" data-channel="dev">
             <span class="channel-hash">#</span> development
           </div>
         </div>
@@ -125,7 +139,6 @@
       </div>
     </div>
 
-    <!-- MAIN -->
     <div class="chat-main">
       <div class="chat-header">
         <div>
@@ -138,281 +151,37 @@
 
       <div class="date-tag-row" id="date-tag-row" style="display:none">
         <div class="pinned-date-tag">
-          📅 Pinned to: <span id="pinned-date-label"></span>
-          <button class="clear-pin" onclick="clearPin()">×</button>
+          <span>Pinned to:</span> <span id="pinned-date-label"></span>
+          <button type="button" class="clear-pin" id="clear-pin-btn" aria-label="Clear pin">×</button>
         </div>
       </div>
 
+      <div class="send-error" id="send-error"></div>
+
       <div class="chat-input-bar">
         <textarea id="msg-input" placeholder="Message #general…" rows="1"></textarea>
-        <button class="btn btn-primary" onclick="sendMessage()" style="height:40px;flex-shrink:0">Send</button>
+        <button type="button" class="btn btn-primary" id="send-btn" style="height:40px;flex-shrink:0">Send</button>
       </div>
     </div>
 
-    <!-- RIGHT -->
     <div class="right-panel">
       <div class="panel-card">
         <div class="panel-header">Pinned date comments</div>
         <div class="pinned-list" id="pinned-list"></div>
       </div>
 
-
+      <div class="panel-card" id="permissions-panel" style="display:none">
+        <div class="panel-header">Posting permissions</div>
+        <div class="permissions-list" id="permissions-list"></div>
+      </div>
     </div>
 
   </div>
 </div>
 
-<script src="config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
 <script src="js/data.js"></script>
-<script>
-markActive('chat');
-updateNavUser();
-
-let currentChannel = 'general';
-let pinnedDate = null;
-
-function buildUserList() {
-  const el = document.getElementById('user-list');
-  el.innerHTML = '';
-  const cur = currentUser();
-  Object.entries(USERS).forEach(([uid, u]) => {
-    const row = document.createElement('div');
-    row.className = 'user-row' + (uid === cur ? ' active-user' : '');
-    
-    const av = document.createElement('div');
-    av.className = 'user-av';
-    av.style.background = u.color;
-    av.textContent = u.initials;
-    
-    const info = document.createElement('div');
-    const name = document.createElement('div');
-    name.className = 'user-name';
-    name.textContent = u.name.replace(' (Owner)','');
-    if (uid === cur) {
-      const badge = document.createElement('span');
-      badge.className = 'you-badge';
-      badge.textContent = 'you';
-      name.appendChild(badge);
-    }
-    
-    const role = document.createElement('div');
-    role.className = 'user-role';
-    role.textContent = uid === 'owner' ? 'Project lead' : 'Collaborator';
-    
-    info.appendChild(name);
-    info.appendChild(role);
-    
-    row.appendChild(av);
-    row.appendChild(info);
-    
-    const dot = document.createElement('div');
-    dot.className = 'online-dot';
-    row.appendChild(dot);
-    
-    el.appendChild(row);
-  });
-}
-function renderUserList() { buildUserList(); }
-buildUserList();
-
-
-
-function switchChannel(ch, el) {
-  currentChannel = ch;
-  document.querySelectorAll('.channel-row').forEach(r => r.classList.remove('active'));
-  el.classList.add('active');
-  document.getElementById('chat-title').textContent = '# ' + ch;
-  document.getElementById('msg-input').placeholder = `Message #${ch}…`;
-  renderMessages();
-}
-
-function renderMessages() {
-  const area = document.getElementById('messages-area');
-  const msgs = loadData('chatMsgs_' + currentChannel, []);
-  area.innerHTML = '';
-
-  if (!msgs.length) {
-    area.innerHTML = `<div style="text-align:center;color:var(--text-3);font-size:13px;padding:2rem 0">No messages yet. Start the conversation!</div>`;
-    return;
-  }
-
-  let lastDay = '';
-  msgs.forEach(m => {
-    const day = m.date || 'Today';
-    if (day !== lastDay) {
-      const div = document.createElement('div');
-      div.className = 'day-divider';
-      div.innerHTML = `<span>${day}</span>`;
-      area.appendChild(div);
-      lastDay = day;
-    }
-    
-    // Fallback if uid is not in our mock USERS map (e.g. real Supabase ID)
-    const u = USERS[m.uid] || USERS['tejas'];
-    
-    const group = document.createElement('div');
-    group.className = 'msg-group';
-    
-    const av = document.createElement('div');
-    av.className = 'msg-av';
-    av.style.background = u.color;
-    av.textContent = u.initials;
-    
-    const content = document.createElement('div');
-    content.className = 'msg-content';
-    
-    const meta = document.createElement('div');
-    meta.className = 'msg-meta';
-    
-    const author = document.createElement('span');
-    author.className = 'msg-author';
-    author.textContent = u.name;
-    
-    const time = document.createElement('span');
-    time.className = 'msg-time';
-    time.textContent = m.time;
-    
-    meta.appendChild(author);
-    meta.appendChild(time);
-    
-    const text = document.createElement('div');
-    text.className = 'msg-text';
-    text.textContent = m.text; // SECURE: Uses textContent to prevent XSS
-    
-    content.appendChild(meta);
-    content.appendChild(text);
-    
-    if (m.pinned_date) {
-      const phase = getPhase(new Date(m.pinned_date));
-      const pin = document.createElement('div');
-      pin.className = 'msg-date-pin';
-      pin.textContent = `📅 ${m.pinned_date_label}${phase ? ' · ' + phase.label : ''}`;
-      content.appendChild(pin);
-    }
-    
-    group.appendChild(av);
-    group.appendChild(content);
-    area.appendChild(group);
-  });
-  area.scrollTop = area.scrollHeight;
-}
-
-async function sendMessage() {
-  const input = document.getElementById('msg-input');
-  const text = input.value.trim();
-  if (!text) return;
-
-  const msg = {
-    text,
-    time: fmtTime(),
-    date: new Date().toLocaleDateString('en-US', {month:'long',day:'numeric',year:'numeric'})
-  };
-  if (pinnedDate) {
-    msg.pinnedDate = pinnedDate;
-    msg.pinnedDateLabel = document.getElementById('pinned-date-label').textContent;
-  }
-  
-  await dbSendMessage(currentChannel, msg);
-  
-  input.value = '';
-  clearPin();
-}
-
-function clearPin() {
-  pinnedDate = null;
-  document.getElementById('date-tag-row').style.display = 'none';
-}
-
-function pinDate(dateStr, label) {
-  pinnedDate = dateStr;
-  document.getElementById('pinned-date-label').textContent = label;
-  document.getElementById('date-tag-row').style.display = 'flex';
-  document.getElementById('msg-input').focus();
-}
-
-function renderPinnedDates() {
-  const allComments = loadData('dayComments', {});
-  const allMsgs = ['general','research','dev'].flatMap(ch => {
-    return (loadData('chatMsgs_' + ch, [])).filter(m => m.pinned_date);
-  });
-
-  const dateMap = {};
-  allMsgs.forEach(m => {
-    if (!dateMap[m.pinned_date]) dateMap[m.pinned_date] = { label: m.pinned_date_label, msgs: [] };
-    dateMap[m.pinned_date].msgs.push(m);
-  });
-  Object.entries(allComments).forEach(([k, v]) => {
-    if (v.length && !dateMap[k]) {
-      const d = new Date(k);
-      dateMap[k] = { label: fmtShort(d), msgs: v };
-    } else if (v.length && dateMap[k]) {
-      dateMap[k].msgs = dateMap[k].msgs.concat(v);
-    }
-  });
-
-  const list = document.getElementById('pinned-list');
-  const entries = Object.entries(dateMap).sort((a,b) => a[0].localeCompare(b[0]));
-
-  if (!entries.length) {
-    list.innerHTML = '<div style="padding:12px 14px;font-size:12px;color:var(--text-3)">No date-pinned comments yet. Pin a message to a date from the chat input.</div>';
-    return;
-  }
-  list.innerHTML = '';
-  entries.forEach(([dateStr, info]) => {
-    const d = new Date(dateStr);
-    const phase = getPhase(d);
-    const preview = info.msgs[info.msgs.length-1];
-    const previewU = preview ? (USERS[preview.uid] || USERS['tejas']) : null;
-    
-    const item = document.createElement('div');
-    item.className = 'pinned-item';
-    
-    const dateEl = document.createElement('div');
-    dateEl.className = 'pinned-date';
-    dateEl.textContent = info.label || fmtShort(d);
-    
-    item.appendChild(dateEl);
-    
-    if (phase) {
-      const phaseEl = document.createElement('div');
-      phaseEl.className = 'pinned-phase';
-      phaseEl.style.color = phase.text;
-      phaseEl.textContent = phase.label;
-      item.appendChild(phaseEl);
-    }
-    
-    const previewEl = document.createElement('div');
-    previewEl.className = 'pinned-preview';
-    previewEl.textContent = (previewU ? previewU.name.replace(' (Owner)','') + ': ' : '') + (preview ? preview.text : '');
-    item.appendChild(previewEl);
-    
-    const countEl = document.createElement('div');
-    countEl.className = 'pinned-count';
-    countEl.textContent = `${info.msgs.length} comment${info.msgs.length>1?'s':''}`;
-    item.appendChild(countEl);
-    
-    item.addEventListener('click', () => pinDate(dateStr, info.label || fmtShort(d)));
-    list.appendChild(item);
-  });
-}
-
-document.getElementById('msg-input').addEventListener('keydown', e => {
-  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
-});
-document.getElementById('msg-input').addEventListener('input', function() {
-  this.style.height = 'auto';
-  this.style.height = Math.min(this.scrollHeight, 120) + 'px';
-});
-
-const params = new URLSearchParams(location.search);
-if (params.get('pinDate')) {
-  const d = new Date(params.get('pinDate'));
-  pinDate(params.get('pinDate'), fmtShort(d));
-}
-
-renderMessages();
-renderPinnedDates();
-</script>
+<script src="js/chat-page.js"></script>
 </body>
 </html>

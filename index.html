@@ -1,6 +1,19 @@
 <!DOCTYPE html>
+<!-- index.html — Project overview; depends on config.js, js/data.js -->
 <html lang="en">
 <head>
+<meta http-equiv="Content-Security-Policy"
+  content="default-src 'self' https://*.supabase.co wss://*.supabase.co;
+           script-src 'self' https://cdn.jsdelivr.net;
+           style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+           font-src https://fonts.gstatic.com;
+           img-src 'self' data:;
+           connect-src 'self' https://*.supabase.co wss://*.supabase.co;
+           object-src 'none';
+           base-uri 'self';
+           form-action 'self';">
+<meta http-equiv="X-Content-Type-Options" content="nosniff">
+<meta http-equiv="Referrer-Policy" content="no-referrer">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Research Project — Overview</title>
@@ -143,104 +156,9 @@
   </div>
 </div>
 
-<script src="config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
 <script src="js/data.js"></script>
-<script>
-markActive('overview');
-updateNavUser();
-
-const today = new Date();
-const demo = new Date(2026,7,20);
-const daysLeft = Math.max(0, Math.ceil((demo - today) / 86400000));
-document.getElementById('days-left').textContent = daysLeft;
-
-const phaseList = document.getElementById('phase-list');
-function renderPhases() {
-  if (!window.serverData) return;
-  phaseList.innerHTML = '';
-  PHASES.forEach((p, i) => {
-    const status = window.serverData.phaseStatuses[i] || 'pending';
-    const isOwner = currentUser() === 'owner';
-    let statusText = 'Pending';
-    let statusBg = 'var(--surface2)';
-    let statusTx = 'var(--text-2)';
-    let actionBtn = '';
-
-    if (status === 'completed') {
-      statusText = 'Complete'; statusBg = '#EAF3DE'; statusTx = '#27500A';
-    } else if (status === 'requested') {
-      statusText = 'Review Pending'; statusBg = '#FAEEDA'; statusTx = '#BA7517';
-      if (isOwner) actionBtn = `<button onclick="approvePhase(${i})" class="btn btn-primary btn-sm" style="margin-left:auto;padding:2px 8px;font-size:11px">Approve</button>`;
-    } else {
-      statusText = 'In progress'; statusBg = p.bg; statusTx = p.text;
-      if (isOwner) actionBtn = `<button onclick="markComplete(${i})" class="btn btn-ghost btn-sm" style="margin-left:auto;padding:2px 8px;font-size:11px">Mark Complete</button>`;
-      else actionBtn = `<button onclick="requestComplete(${i})" class="btn btn-ghost btn-sm" style="margin-left:auto;padding:2px 8px;font-size:11px">Request Completion</button>`;
-    }
-
-    const el = document.createElement('div');
-    el.className = 'phase-item';
-    el.innerHTML = `
-      <div class="phase-dot" style="background:${p.border}"></div>
-      <div class="phase-info">
-        <div class="phase-name"></div>
-        <div class="phase-dates">${fmtShort(p.start)} – ${fmtShort(p.end)}</div>
-      </div>
-      <div class="phase-status" style="background:${statusBg};color:${statusTx}">${statusText}</div>
-      ${actionBtn}
-    `;
-    el.querySelector('.phase-name').textContent = p.label; // Secure textContent
-    phaseList.appendChild(el);
-  });
-}
-
-function requestComplete(idx) { dbUpdatePhaseStatus(idx, 'requested'); }
-function markComplete(idx) { dbUpdatePhaseStatus(idx, 'completed'); }
-function approvePhase(idx) { dbUpdatePhaseStatus(idx, 'completed'); }
-
-const upcoming = MEETINGS.filter(m => m >= today);
-const nextM = upcoming[0];
-document.getElementById('next-meeting-date').textContent = nextM ? fmtDate(nextM) : 'No more sessions';
-
-function openChangePassword() {
-  document.getElementById('pwd-modal').style.display = 'flex';
-  document.getElementById('pwd-err').style.display = 'none';
-  document.getElementById('old-pwd').value = '';
-  document.getElementById('new-pwd').value = '';
-}
-function closeChangePassword() {
-  document.getElementById('pwd-modal').style.display = 'none';
-}
-async function submitChangePassword() {
-  const oldPassword = document.getElementById('old-pwd').value;
-  const newPassword = document.getElementById('new-pwd').value;
-  const actualUserIdMap = { 'owner': 'PD01', 'tejas': 'TG05', 'atshal': 'AK03' };
-  const userId = actualUserIdMap[currentUser()];
-  
-  if (!oldPassword || !newPassword) return;
-  
-  // Reverting to the mock API behavior as requested
-  try {
-    const res = await fetch('/api/change-password', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId, oldPassword, newPassword })
-    });
-    const data = await res.json();
-    if (res.ok) {
-      alert('Password changed successfully. Please log in again.');
-      logout();
-    } else {
-      const err = document.getElementById('pwd-err');
-      err.textContent = data.error || 'Failed to change password';
-      err.style.display = 'block';
-    }
-  } catch (e) {
-    const err = document.getElementById('pwd-err');
-    err.textContent = 'Serverless environment: mock API not available.';
-    err.style.display = 'block';
-  }
-}
-</script>
+<script src="js/index-page.js"></script>
 </body>
 </html>

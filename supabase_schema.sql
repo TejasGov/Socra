@@ -49,5 +49,13 @@ create policy "Allow all access to day_comments" on public.day_comments for all 
 create policy "Allow all access to phase_statuses" on public.phase_statuses for all using (true) with check (true);
 create policy "Allow all access to chat_perms" on public.chat_perms for all using (true) with check (true);
 
--- 4. Insert initial permissions
-insert into public.chat_perms (uid, can_post) values ('tejas', true), ('atshal', true);
+-- 4. Table privileges (required — RLS alone is not enough)
+grant usage on schema public to anon, authenticated;
+grant select, insert, update, delete on public.chat_messages to anon, authenticated;
+grant select, insert, update, delete on public.day_comments to anon, authenticated;
+grant select, insert, update, delete on public.phase_statuses to anon, authenticated;
+grant select, insert, update, delete on public.chat_perms to anon, authenticated;
+
+-- 5. Insert initial permissions
+insert into public.chat_perms (uid, can_post) values ('tejas', true), ('atshal', true)
+on conflict (uid) do nothing;
