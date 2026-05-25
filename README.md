@@ -61,16 +61,42 @@ A static multi-page research project site with calendar, Gantt timeline, team ch
 - **Permissions**: Owner can toggle posting for collaborators via `chat_perms`.
 - **Security**: Content-Security-Policy on all pages; user text via `textContent` only; rate limits on sends/comments.
 
-## Deploying
+## Deploying on Vercel
 
-### GitHub Pages / Netlify / Vercel
+### Option A — GitHub (recommended)
 
-Upload or push the project root as-is. Ensure `config.js` contains your Supabase URL and anon key before deploy.
+1. Push your branch to GitHub (`TejasGov/tasks-Socra`).
+2. Go to [vercel.com](https://vercel.com) → **Add New Project** → import the repo.
+3. **Production branch:** `Reconfuring_Session_Chat` (or `main` after merge).
+4. **Framework Preset:** Other  
+   **Build Command:** `npm run build`  
+   **Output Directory:** `.` (project root)
+5. **Environment Variables** (Settings → Environment Variables):
+
+   | Name | Value |
+   |------|--------|
+   | `SUPABASE_URL` | `https://ticwwnssngfeyztpvmoo.supabase.co` |
+   | `SUPABASE_ANON_KEY` | Your publishable key from Supabase API Keys |
+
+6. **Deploy**. The build runs `scripts/generate-config.js` and creates `config.js` on the server (not committed to git).
+
+### Option B — Vercel CLI
 
 ```bash
-# Example: Vercel
+npm i -g vercel
+cd tasks-Socra
 vercel
+# follow prompts; add env vars in the dashboard or:
+vercel env add SUPABASE_URL
+vercel env add SUPABASE_ANON_KEY
+vercel --prod
 ```
+
+### After deploy
+
+- Site URL will look like `https://tasks-socra.vercel.app`
+- Open `/login.html` to sign in
+- Ensure Supabase **SQL schema** (`supabase_schema.sql`) was run on the same project as your env vars
 
 ## Customization
 
