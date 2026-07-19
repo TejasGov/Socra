@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 📖 Development workflow
+    url: https://github.com/TejasGov/Socra/blob/main/docs/development-workflow.md
+    about: Branching, PRs, and review process.
+  - name: 🔐 Security & secrets
+    url: https://github.com/TejasGov/Socra/blob/main/docs/secrets-and-environments.md
+    about: How to handle secrets and environments before opening an issue.

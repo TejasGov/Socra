@@ -1,0 +1,9 @@
+# Training dependencies. Run in a GPU environment (Colab Pro+).
+# Versions are indicative; pin exactly per experiment for reproducibility.
+transformers>=4.44
+trl>=0.9
+peft>=0.12
+bitsandbytes>=0.43
+accelerate>=0.33
+datasets>=2.20
+huggingface_hub>=0.24

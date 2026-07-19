@@ -1,0 +1,48 @@
+name: "🔬 Research / data task"
+description: Track a model-training, evaluation, dataset, or research task.
+title: "[Research]: "
+labels: ["research"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ⚠️ Never attach real student data. Reference dataset locations, not contents.
+  - type: textarea
+    id: goal
+    attributes:
+      label: Research goal / hypothesis
+    validations:
+      required: true
+  - type: dropdown
+    id: category
+    attributes:
+      label: Category
+      options:
+        - Dataset preparation
+        - Fine-tuning (QLoRA/LoRA)
+        - Evaluation
+        - Prompt / Socratic strategy
+        - Embeddings / retrieval
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: dataset
+    attributes:
+      label: Dataset / model reference
+      description: Where the data or base model lives (paths, HF repo, bucket). No raw data.
+  - type: textarea
+    id: method
+    attributes:
+      label: Method / plan
+  - type: textarea
+    id: success
+    attributes:
+      label: Success metrics
+      placeholder: |
+        - [ ] ...
+  - type: textarea
+    id: artifacts
+    attributes:
+      label: Expected artifacts
+      placeholder: adapter version (socra-gemma-3-4b-vX), eval report, notebook link

@@ -1,0 +1,11 @@
+"""Response schemas for health/status endpoints."""
+
+from __future__ import annotations
+
+from pydantic import BaseModel
+
+
+class HealthStatus(BaseModel):
+    status: str
+    service: str
+    version: str
