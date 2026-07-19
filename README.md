@@ -10,7 +10,7 @@
 
 ![Status](https://img.shields.io/badge/status-prototype-orange?style=flat-square)
 ![Funded](https://img.shields.io/badge/ELN_Funded-University_at_Buffalo-005bbb?style=flat-square)
-![Stack](https://img.shields.io/badge/stack-Python_%7C_React_%7C_OpenAI-111111?style=flat-square)
+![Stack](https://img.shields.io/badge/stack-Python_%7C_React_%7C_Gemma-111111?style=flat-square)
 
 <br />
 
@@ -76,8 +76,8 @@ No direct answers. Ever.
 |---|---|
 | Frontend | React / Next.js |
 | Backend | Python (FastAPI) |
-| AI | OpenAI / Groq APIs |
-| RAG Pipeline | FAISS / Pinecone |
+| Database & Vector Store | Supabase PostgreSQL + `pgvector` |
+| AI / LLM | self-hosted Gemma 4 (via vLLM) |
 | Sandboxing | Browser-level constraints |
 
 ---
