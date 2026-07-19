@@ -3,7 +3,7 @@
 # Requires an NVIDIA GPU. Only the backend should reach this port.
 set -euo pipefail
 
-: "${MODEL_NAME:=google/gemma-3-4b-it}"
+: "${MODEL_NAME:=google/gemma-4-E4B-it}"
 : "${PORT:=8001}"
 : "${MAX_MODEL_LEN:=4096}"
 : "${GPU_MEMORY_UTILIZATION:=0.90}"

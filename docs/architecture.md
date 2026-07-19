@@ -1,7 +1,7 @@
 # Architecture
 
 Socra is a web-based Socratic tutoring platform built around a fine-tuned,
-self-hosted **Gemma 3 4B instruction-tuned** model. The platform guides students
+self-hosted **Gemma 4 instruction-tuned** model. The platform guides students
 through progressive questions and hints instead of giving final answers.
 
 ## System overview

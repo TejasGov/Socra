@@ -1,6 +1,6 @@
 # Model Training
 
-QLoRA fine-tuning of **Gemma 3 4B Instruction-Tuned** (`google/gemma-3-4b-it`)
+QLoRA fine-tuning of **Gemma 4 Instruction-Tuned** (`google/gemma-4-E4B-it`)
 for Socratic tutoring. See [../../docs/model-training.md](../../docs/model-training.md).
 
 ```text
@@ -26,6 +26,6 @@ python scripts/train_qlora.py --config configs/qlora.yaml
 
 ## Versioning
 
-Name each adapter `socra-gemma-3-4b-vN` and record it in `MODEL_VERSION`.
+Name each adapter `socra-gemma-4-E4B-vN` and record it in `MODEL_VERSION`.
 Do not commit weights/adapters — they are git-ignored and stored in the model
 registry/bucket.

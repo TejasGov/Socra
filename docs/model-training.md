@@ -1,6 +1,6 @@
 # Model Training
 
-Socra fine-tunes **Gemma 3 4B Instruction-Tuned** (`google/gemma-3-4b-it`) with
+Socra fine-tunes **Gemma 4 Instruction-Tuned** (`google/gemma-4-E4B-it`) with
 parameter-efficient QLoRA to produce a Socratic tutoring model.
 
 ## Stack
@@ -11,7 +11,7 @@ parameter-efficient QLoRA to produce a Socratic tutoring model.
 | PEFT | LoRA / QLoRA (PEFT) |
 | Quantization | bitsandbytes |
 | Environment | Google Colab Pro+ (GPU) |
-| Base model | `google/gemma-3-4b-it` |
+| Base model | `google/gemma-4-E4B-it` |
 | Inference | vLLM (`services/model-server`) |
 
 ## Prerequisites
@@ -41,8 +41,8 @@ services/model-training/
 Every trained adapter/model gets an explicit, incrementing version:
 
 ```text
-socra-gemma-3-4b-v1
-socra-gemma-3-4b-v2
+socra-gemma-4-E4B-v1
+socra-gemma-4-E4B-v2
 ...
 ```
 

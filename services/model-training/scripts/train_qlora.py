@@ -1,4 +1,4 @@
-"""QLoRA fine-tuning entry point for Socra (Gemma 3 4B).
+"""QLoRA fine-tuning entry point for Socra (Gemma 4).
 
 Scaffold: parses a YAML config and outlines the training flow. Fill in the TRL
 SFTTrainer wiring when running on a GPU environment. Requires a Hugging Face

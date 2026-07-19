@@ -1,8 +1,8 @@
 # QLoRA fine-tuning configuration for Socra.
 # Consumed by scripts/train_qlora.py. Tune per experiment.
 
-base_model: google/gemma-3-4b-it
-model_version: socra-gemma-3-4b-v1
+base_model: google/gemma-4-E4B-it
+model_version: socra-gemma-4-E4B-v1
 
 # Dataset (paths are git-ignored; never commit real student data)
 dataset:
@@ -26,7 +26,7 @@ lora:
 
 # Training (TRL SFTTrainer)
 training:
-  output_dir: outputs/socra-gemma-3-4b-v1
+  output_dir: outputs/socra-gemma-4-E4B-v1
   num_train_epochs: 3
   per_device_train_batch_size: 2
   gradient_accumulation_steps: 8

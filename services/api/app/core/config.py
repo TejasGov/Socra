@@ -50,8 +50,8 @@ class Settings(BaseSettings):
     # Model server / vLLM
     MODEL_SERVER_URL: str = "http://localhost:8001"
     MODEL_SERVER_API_KEY: str = ""
-    MODEL_NAME: str = "google/gemma-3-4b-it"
-    MODEL_VERSION: str = "socra-gemma-3-4b-v1"
+    MODEL_NAME: str = "google/gemma-4-E4B-it"
+    MODEL_VERSION: str = "socra-gemma-4-E4B-v1"
 
     # Embeddings
     EMBEDDING_MODEL: str = "BAAI/bge-small-en-v1.5"

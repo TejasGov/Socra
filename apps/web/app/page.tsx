@@ -8,7 +8,7 @@ export default function Home() {
       <p className="text-lg text-zinc-600 dark:text-zinc-300">
         A Socratic tutoring platform. Socra guides students through progressive
         questions and hints instead of giving final answers, powered by a
-        self-hosted, fine-tuned Gemma 3 4B model.
+        self-hosted, fine-tuned Gemma 4 model.
       </p>
       <div className="text-sm text-zinc-500">
         Frontend is running. Start the backend at{" "}

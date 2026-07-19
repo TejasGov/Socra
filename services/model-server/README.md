@@ -1,6 +1,6 @@
 # Model Server (vLLM)
 
-Serves the fine-tuned Gemma 3 4B model over an OpenAI-compatible API using
+Serves the fine-tuned Gemma 4 model over an OpenAI-compatible API using
 **vLLM**. Runs on a GPU host.
 
 > **Security:** Only the Socra backend may call this service. It must be
