@@ -1,0 +1,63 @@
+# Socra — development scaffold.
+# This is a starting point; update as services are implemented.
+# Supabase (Postgres + Auth + Storage) is provided by your Supabase project,
+# so only the app services and a local pgvector DB (optional) are defined here.
+
+services:
+  api:
+    build:
+      context: ./services/api
+      dockerfile: Dockerfile
+    container_name: socra-api
+    env_file:
+      - ./services/api/.env
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./services/api:/app
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    depends_on:
+      - db
+
+  web:
+    build:
+      context: ./apps/web
+      dockerfile: Dockerfile
+    container_name: socra-web
+    env_file:
+      - ./apps/web/.env.local
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./apps/web:/app
+      - /app/node_modules
+    command: npm run dev
+
+  # Optional local Postgres with pgvector for offline development.
+  # Production/staging uses Supabase Postgres instead.
+  db:
+    image: pgvector/pgvector:pg16
+    container_name: socra-db
+    environment:
+      POSTGRES_USER: socra
+      POSTGRES_PASSWORD: socra
+      POSTGRES_DB: socra
+    ports:
+      - "5432:5432"
+    volumes:
+      - socra-db-data:/var/lib/postgresql/data
+      - ./database/migrations:/docker-entrypoint-initdb.d
+
+  # model-server (vLLM) is GPU-dependent and typically run separately.
+  # Uncomment and configure once a GPU host is available.
+  # model-server:
+  #   build:
+  #     context: ./services/model-server
+  #   container_name: socra-model-server
+  #   env_file:
+  #     - ./services/api/.env
+  #   ports:
+  #     - "8001:8001"
+
+volumes:
+  socra-db-data:

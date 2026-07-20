@@ -10,7 +10,7 @@
 
 ![Status](https://img.shields.io/badge/status-prototype-orange?style=flat-square)
 ![Funded](https://img.shields.io/badge/ELN_Funded-University_at_Buffalo-005bbb?style=flat-square)
-![Stack](https://img.shields.io/badge/stack-Python_%7C_React_%7C_OpenAI-111111?style=flat-square)
+![Stack](https://img.shields.io/badge/stack-Python_%7C_React_%7C_Gemma-111111?style=flat-square)
 
 <br />
 
@@ -76,8 +76,8 @@ No direct answers. Ever.
 |---|---|
 | Frontend | React / Next.js |
 | Backend | Python (FastAPI) |
-| AI | OpenAI / Groq APIs |
-| RAG Pipeline | FAISS / Pinecone |
+| Database & Vector Store | Supabase PostgreSQL + `pgvector` |
+| AI / LLM | self-hosted Gemma 4 (via vLLM) |
 | Sandboxing | Browser-level constraints |
 
 ---
@@ -110,6 +110,82 @@ No direct answers. Ever.
 - [ ] LMS integration (Canvas, Blackboard)
 - [ ] Multi-course faculty dashboard
 - [ ] Published research findings from pilot data
+
+---
+
+## Development Setup
+
+> This section covers the Phase 1 development scaffold. Full technical details
+> live in [`docs/`](docs/).
+
+### Prerequisites
+
+- Git
+- Node.js **22** (see `apps/web/.nvmrc`) + npm
+- Python **3.12** (3.11+ supported; see `services/api/.python-version`)
+- Docker Desktop
+- A Supabase project
+- Access to the Gemma model weights (Hugging Face) and a GPU for training/inference
+
+### Repository layout
+
+```text
+apps/web/              Next.js + TypeScript frontend
+services/api/          FastAPI backend
+services/model-training/  Gemma QLoRA fine-tuning
+services/model-server/    vLLM inference service
+packages/shared-types/    shared TS contract types
+database/              migrations, policies, seed
+docs/                  architecture, workflow, secrets, deployment
+```
+
+### Environment files
+
+```bash
+cp .env.example .env                       # root (Docker Compose)
+cp .env.example apps/web/.env.local        # frontend-safe vars only
+cp .env.example services/api/.env          # backend-only secrets
+```
+
+Never copy backend-only secrets into `apps/web/.env.local`. See
+[docs/secrets-and-environments.md](docs/secrets-and-environments.md).
+
+### Frontend
+
+```bash
+cd apps/web
+npm install
+npm run dev        # http://localhost:3000
+```
+
+### Backend
+
+```bash
+cd services/api
+python -m venv .venv
+source .venv/bin/activate          # Windows: .venv\Scripts\Activate.ps1
+pip install -r requirements-dev.txt
+uvicorn app.main:app --reload --port 8000   # http://localhost:8000 (docs at /docs)
+```
+
+### Docker (all services)
+
+```bash
+docker compose up --build
+```
+
+### Tests
+
+```bash
+# Frontend
+cd apps/web && npm run lint && npm run typecheck && npm run test
+
+# Backend
+cd services/api && ruff check . && pytest
+```
+
+See [docs/development-workflow.md](docs/development-workflow.md) for branching
+and PR conventions.
 
 ---
 

@@ -1,0 +1,39 @@
+# QLoRA fine-tuning configuration for Socra.
+# Consumed by scripts/train_qlora.py. Tune per experiment.
+
+base_model: google/gemma-4-E4B-it
+model_version: socra-gemma-4-E4B-v1
+
+# Dataset (paths are git-ignored; never commit real student data)
+dataset:
+  train_path: data/train.jsonl
+  eval_path: data/eval.jsonl
+  max_seq_length: 2048
+
+# QLoRA / bitsandbytes
+quantization:
+  load_in_4bit: true
+  bnb_4bit_quant_type: nf4
+  bnb_4bit_compute_dtype: bfloat16
+  bnb_4bit_use_double_quant: true
+
+# LoRA (PEFT)
+lora:
+  r: 16
+  alpha: 32
+  dropout: 0.05
+  target_modules: [q_proj, k_proj, v_proj, o_proj]
+
+# Training (TRL SFTTrainer)
+training:
+  output_dir: outputs/socra-gemma-4-E4B-v1
+  num_train_epochs: 3
+  per_device_train_batch_size: 2
+  gradient_accumulation_steps: 8
+  learning_rate: 2.0e-4
+  lr_scheduler_type: cosine
+  warmup_ratio: 0.03
+  logging_steps: 10
+  save_strategy: epoch
+  bf16: true
+  seed: 42

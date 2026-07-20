@@ -1,0 +1,36 @@
+{
+  "name": "@socra/acp-bridge",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Local bridge that speaks ACP (Agent Client Protocol) over stdio to a student's own Claude Code or Codex agent, and exposes a localhost WebSocket for the Socra web frontend.",
+  "type": "module",
+  "bin": {
+    "socra-bridge": "dist/cli.js"
+  },
+  "types": "dist/index.d.ts",
+  "main": "dist/index.js",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "start": "node dist/cli.js",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@zed-industries/agent-client-protocol": "^0.4.5",
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/ws": "^8.5.12",
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.4"
+  },
+  "engines": {
+    "node": ">=18.17.0"
+  }
+}

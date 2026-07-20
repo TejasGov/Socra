@@ -1,0 +1,14 @@
+# Gitleaks configuration for Socra.
+# Extends the default ruleset and adds an allowlist for known-safe
+# placeholder files so example templates don't trigger false positives.
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Global allowlist for example/template files"
+paths = [
+  '''\.env\.example$''',
+  '''(^|/)\.github/''',
+  '''(^|/)docs/''',
+]
