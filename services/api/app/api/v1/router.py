@@ -4,9 +4,11 @@ from __future__ import annotations
 
 from fastapi import APIRouter
 
+from app.api.v1 import acp
 from app.core.config import get_settings
 
 api_router = APIRouter()
+api_router.include_router(acp.router, prefix="/acp", tags=["acp"])
 
 
 @api_router.get("/status", tags=["meta"])
